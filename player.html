@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Player - Bible Quiz Pro</title>
+    <link rel="icon" type="image/png" href="IBMP.png">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at bottom left, #1e1b4b, #0f172a); min-height: 100vh; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .timer-low { color: #f87171; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <div id="setup-ui" class="glass p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl">
+        <h2 class="text-2xl font-extrabold mb-2 text-purple-400">Join the Quiz</h2>
+        <p class="text-slate-400 text-sm mb-6">Enter your name to register for the live session.</p>
+        <input type="text" id="team-name" placeholder="YOUR NAME / TEAM" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 font-bold tracking-widest uppercase focus:outline-none focus:border-purple-500 text-center">
+        <button id="join-btn" onclick="joinGame()" class="w-full bg-purple-600 hover:bg-purple-500 p-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95">Connect to Live</button>
+    </div>
+
+    <div id="game-ui" class="hidden w-full max-w-2xl text-center">
+        <div class="glass p-6 rounded-3xl mb-6 flex justify-between items-center">
+            <div class="text-left">
+                <p class="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Active Team</p>
+                <h3 id="display-team" class="font-black text-xl uppercase italic">---</h3>
+            </div>
+            <div id="timer-box" class="hidden flex flex-col items-end">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time Remaining</p>
+                <h3 id="timer-seconds" class="font-black text-2xl text-amber-400">25s</h3>
+            </div>
+        </div>
+
+        <div id="waiting-state" class="py-20">
+            <div class="animate-bounce mb-6 text-6xl">⏳</div>
+            <h2 class="text-3xl font-extrabold text-slate-300">Waiting for Question...</h2>
+        </div>
+
+        <div id="answer-state" class="hidden">
+            <div id="pts-badge" class="inline-block bg-amber-400 text-slate-900 px-4 py-1 rounded-full text-xs font-black mb-4">0 POINTS</div>
+            <h2 id="current-q" class="text-2xl md:text-3xl font-bold mb-8 text-white px-2">...</h2>
+            
+            <div id="input-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <button onclick="selectOption('A')" id="btn-optA" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                    <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">A</span>
+                    <span id="text-optA" class="tracking-wide">...</span>
+                </button>
+                <button onclick="selectOption('B')" id="btn-optB" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                    <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">B</span>
+                    <span id="text-optB" class="tracking-wide">...</span>
+                </button>
+                <button onclick="selectOption('C')" id="btn-optC" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                    <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">C</span>
+                    <span id="text-optC" class="tracking-wide">...</span>
+                </button>
+                <button onclick="selectOption('D')" id="btn-optD" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                    <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">D</span>
+                    <span id="text-optD" class="tracking-wide">...</span>
+                </button>
+            </div>
+
+            <div id="blind-feedback" class="hidden mt-6 p-6 border-2 border-dashed border-white/20 rounded-3xl">
+                <p id="status-text" class="text-emerald-400 font-bold mb-2 uppercase tracking-widest">Choice Locked In</p>
+                <p id="sub-status" class="text-slate-400 text-sm mb-4 italic">Waiting for host to reveal verified solution...</p>
+                
+                <div id="reveal-box" class="hidden bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/30">
+                    <p class="text-[10px] uppercase text-emerald-400 font-bold mb-1 tracking-wider">Correct Answer Option</p>
+                    <p id="reveal-answer" class="text-3xl font-black text-white">---</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVlUbM7GCnfiDHYgCmlIqarzqig7_VW1VDwLHXcsyv-zQL9yfKRqpVJmhBhVavn7_T/exec";
+        let teamName = "", currentCorrectAns = "", currentPoints = 0, hasSubmitted = false;
+        let timeLeft = 25; 
+        let timerInterval = null;
+        let activeQuestionId = "";
+
+        async function joinGame() {
+            const input = document.getElementById('team-name');
+            const btn = document.getElementById('join-btn');
+            teamName = input.value.trim().toUpperCase();
+            if(!teamName) return alert("Please enter a valid handle name description.");
+
+            btn.innerText = "REGISTERING...";
+            btn.disabled = true;
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors", 
+                    body: JSON.stringify({ action: "registerPlayer", user: teamName })
+                });
+                document.getElementById('display-team').innerText = teamName;
+                document.getElementById('setup-ui').classList.add('hidden');
+                document.getElementById('game-ui').classList.remove('hidden');
+                setInterval(syncPlayer, 1500);
+            } catch (e) { alert("Error connecting to real-time service host node."); }
+        }
+
+        async function syncPlayer() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?cb=${Date.now()}`);
+                const data = await res.json();
+                
+                if (data.status === "ACTIVE") {
+                    document.getElementById('waiting-state').classList.add('hidden');
+                    document.getElementById('answer-state').classList.remove('hidden');
+                    document.getElementById('timer-box').classList.remove('hidden');
+                    
+                    if (activeQuestionId !== data.question) {
+                        activeQuestionId = data.question;
+                        resetForNewQuestion(data);
+                    }
+                    
+                    document.getElementById('current-q').innerText = data.question;
+                    document.getElementById('pts-badge').innerText = data.points + " POINTS";
+                    
+                    // Options derived dynamic loading
+                    if(data.opts) {
+                        document.getElementById('text-optA').innerText = data.opts.A || "...";
+                        document.getElementById('text-optB').innerText = data.opts.B || "...";
+                        document.getElementById('text-optC').innerText = data.opts.C || "...";
+                        document.getElementById('text-optD').innerText = data.opts.D || "...";
+                    }
+
+                    currentCorrectAns = data.answer.toUpperCase();
+                    currentPoints = data.points;
+
+                    if (data.reveal === true || data.reveal === "true" || data.revealAnswer === true) {
+                        document.getElementById('reveal-box').classList.remove('hidden');
+                        document.getElementById('reveal-answer').innerText = `${currentCorrectAns}: ${data.opts ? data.opts[currentCorrectAns] : ''}`;
+                        document.getElementById('sub-status').innerText = "Host has revealed the official result details!";
+                    }
+                } else {
+                    document.getElementById('waiting-state').classList.remove('hidden');
+                    document.getElementById('answer-state').classList.add('hidden');
+                    document.getElementById('timer-box').classList.add('hidden');
+                    activeQuestionId = "";
+                    clearInterval(timerInterval);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function resetForNewQuestion(data) {
+            hasSubmitted = false;
+            timeLeft = data.time || data.t || 25; 
+            
+            document.getElementById('input-container').classList.remove('hidden');
+            document.getElementById('blind-feedback').classList.add('hidden');
+            document.getElementById('reveal-box').classList.add('hidden');
+            document.getElementById('sub-status').innerText = "Waiting for host to reveal answer...";
+            document.getElementById('timer-seconds').innerText = timeLeft + "s";
+            document.getElementById('timer-seconds').classList.remove('timer-low');
+
+            // Restore options accessibility styling
+            ['A', 'B', 'C', 'D'].forEach(opt => {
+                const el = document.getElementById(`btn-opt${opt}`);
+                el.disabled = false;
+                el.className = "bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3 w-full";
+            });
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-seconds').innerText = timeLeft + "s";
+                if(timeLeft <= 5) document.getElementById('timer-seconds').classList.add('timer-low');
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (!hasSubmitted) timeoutAutoSubmit();
+                }
+            }, 1000);
+        }
+
+        async function selectOption(pickedLetter) {
+            if(hasSubmitted) return;
+            hasSubmitted = true;
+            clearInterval(timerInterval);
+
+            // Visual tracking adjustments to selected block elements
+            ['A', 'B', 'C', 'D'].forEach(opt => {
+                const el = document.getElementById(`btn-opt${opt}`);
+                el.disabled = true;
+                if(opt === pickedLetter) {
+                    el.classList.add('bg-purple-600/80', 'border-purple-400');
+                } else {
+                    el.classList.add('opacity-40');
+                }
+            });
+
+            document.getElementById('input-container').classList.add('hidden');
+            document.getElementById('blind-feedback').classList.remove('hidden');
+            document.getElementById('status-text').innerText = `Choice locked in: Option ${pickedLetter}`;
+
+            if(pickedLetter === currentCorrectAns) {
+                await fetch(SCRIPT_URL, {
+                    method: "POST", 
+                    mode: "no-cors",
+                    body: JSON.stringify({ 
+                        action: "submitScore", 
+                        user: teamName, 
+                        points: currentPoints 
+                    })
+                });
+            }
+        }
+
+        function timeoutAutoSubmit() {
+            hasSubmitted = true;
+            ['A', 'B', 'C', 'D'].forEach(opt => {
+                document.getElementById(`btn-opt${opt}`).disabled = true;
+                document.getElementById(`btn-opt${opt}`).classList.add('opacity-40');
+            });
+            document.getElementById('input-container').classList.add('hidden');
+            document.getElementById('blind-feedback').classList.remove('hidden');
+            document.getElementById('status-text').innerText = "TIME RAN OUT (No Choice Sent)";
+        }
+    </script>
+</body>
+</html>
