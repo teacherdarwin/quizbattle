@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Monitor - Bible Quiz Pro</title>
+    <link rel="icon" type="image/png" href="IBMP.png">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #2e1065, #0f172a);
+            min-height: 100vh;
+            transition: background 0.5s ease;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-glass-effect {
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-glass-effect:hover {
+            transform: translateY(-2px);
+        }
+
+        .reveal-anim { 
+            animation: reveal-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+        }
+
+        @keyframes reveal-pop {
+            0% { transform: scale(0.85) translateY(20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        #leaderboard {
+            position: relative;
+        }
+
+        .player-row {
+            position: absolute;
+            width: 100%;
+            transition: top 1.2s cubic-bezier(0.45, 0, 0.55, 1);
+            left: 0;
+        }
+
+        .progress-fill {
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #leaderboard::-webkit-scrollbar { width: 4px; }
+        #leaderboard::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.2); border-radius: 10px; }
+
+        .fs-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+    </style>
+</head>
+<body class="p-8 md:p-16 overflow-hidden" id="main-body">
+    
+    <div class="flex justify-between items-end mb-16 border-b border-white/10 pb-10">
+        <div class="flex items-center gap-6">
+            <img src="IBMP.png" alt="Logo" class="w-20 h-20 object-contain logo-glass-effect">
+            <div>
+                <h1 class="uppercase tracking-[0.4em] font-extrabold text-3xl">
+                    <span class="text-purple-400">Balikatan</span> 
+                    <span class="text-indigo-400">Bible Quiz</span>
+                </h1>
+                <div class="flex items-center gap-3 mt-2">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                    </span>
+                    <p id="status-tag" class="text-slate-300 font-bold text-xs uppercase tracking-[0.2em]">Live Signal: Encrypted</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="toggleFullscreen()" class="fs-btn glass px-4 py-3 rounded-2xl text-slate-300 transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                <span id="fs-icon">⛶</span> <span id="fs-text">Fullscreen</span>
+            </button>
+
+            <div class="glass px-6 py-3 rounded-2xl flex items-center gap-4">
+                <span class="text-slate-300 text-xs font-bold uppercase tracking-widest">Global Status</span>
+                <span class="text-emerald-400 font-black text-sm uppercase">Active</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-16 h-[65vh] items-start">
+        <div class="col-span-8 flex flex-col justify-center h-full relative pr-4">
+            <div id="mon-pts" class="mb-6 text-xl text-slate-900 font-black hidden uppercase tracking-[0.3em] bg-purple-300 w-fit px-5 py-1.5 rounded-full border border-purple-400 shadow-lg">
+                0 POINTS
+            </div>
+            
+            <div id="mon-q" class="text-5xl md:text-6xl font-extrabold leading-[1.2] text-white transition-all duration-700 ease-out drop-shadow-md">
+                Ready for the next Question...
+            </div>
+            
+            <div id="mon-ans-container" class="absolute inset-0 bg-purple-950/95 backdrop-blur-2xl hidden flex-col items-center justify-center text-center p-12 rounded-[3rem] border border-purple-500/40 reveal-anim z-20 shadow-2xl">
+                <span class="text-emerald-400 font-bold tracking-[0.4em] uppercase text-sm mb-6 bg-emerald-500/10 px-4 py-1 rounded-full border border-emerald-500/20">Correct Answer Revealed</span>
+                <div id="mon-ans-text" class="text-5xl md:text-7xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] leading-tight max-w-full overflow-hidden text-ellipsis">
+                    ---
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-span-4 h-full flex flex-col">
+            <div class="glass rounded-[2rem] p-8 h-full flex flex-col border-white/5">
+                <h2 class="text-white uppercase tracking-widest font-extrabold mb-8 text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 bg-purple-500 rounded-full"></span> Top Contenders
+                </h2>
+                <div id="leaderboard" class="overflow-y-auto pr-4 flex-grow relative">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVlUbM7GCnfiDHYgCmlIqarzqig7_VW1VDwLHXcsyv-zQL9yfKRqpVJmhBhVavn7_T/exec";
+        const ROW_HEIGHT = 85; 
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error: ${err.message}`);
+                });
+                document.getElementById('fs-text').innerText = "Exit";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    document.getElementById('fs-text').innerText = "Fullscreen";
+                }
+            }
+        }
+
+        async function sync() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?cb=${Date.now()}`);
+                const data = await res.json();
+                
+                const qEl = document.getElementById('mon-q');
+                const pEl = document.getElementById('mon-pts');
+                const ansContainer = document.getElementById('mon-ans-container');
+                const ansText = document.getElementById('mon-ans-text');
+                const lbContainer = document.getElementById('leaderboard');
+
+                if(data.status === "ACTIVE") {
+                    qEl.innerText = data.question;
+                    pEl.innerText = data.points + " POINTS";
+                    pEl.classList.remove('hidden');
+                    qEl.classList.remove('text-white/20');
+                    qEl.classList.add('text-white');
+
+                    if(data.reveal === true || data.reveal === "true" || data.revealAnswer === true) {
+                        // Extract localized option string literal details if present inside structured responses
+                        let displaySolution = data.answer;
+                        if(data.opts && data.opts[data.answer]) {
+                            displaySolution = `(${data.answer}) ${data.opts[data.answer]}`;
+                        }
+                        ansText.innerText = displaySolution;
+                        ansContainer.classList.remove('hidden');
+                        ansContainer.classList.add('flex');
+                    } else {
+                        ansContainer.classList.add('hidden');
+                        ansContainer.classList.remove('flex');
+                    }
+                } else {
+                    qEl.innerText = "Ready for the next Question...";
+                    qEl.classList.add('text-white/20');
+                    pEl.classList.add('hidden');
+                    ansContainer.classList.add('hidden');
+                    ansContainer.classList.remove('flex');
+                }
+
+                // Leaderboard dynamic tracking updates
+                if (data.players && data.players.length > 0) {
+                    const sortedPlayers = data.players
+                        .filter(p => p.name !== "Username") 
+                        .sort((a, b) => b.score - a.score);
+
+                    const maxScore = Math.max(...sortedPlayers.map(p => p.score), 1);
+
+                    sortedPlayers.forEach((player, idx) => {
+                        const safeId = player.name.replace(/\s+/g, '');
+                        let playerRow = document.getElementById(`player-${safeId}`);
+                        
+                        if (!playerRow) {
+                            playerRow = document.createElement('div');
+                            playerRow.id = `player-${safeId}`;
+                            playerRow.className = 'player-row space-y-3 group';
+                            playerRow.innerHTML = `
+                                <div class="flex justify-between items-end">
+                                    <div class="flex items-center gap-3">
+                                        <span class="rank-text text-xs font-bold text-slate-400"></span>
+                                        <span class="font-bold text-xl uppercase tracking-tighter text-white">${player.name}</span>
+                                    </div>
+                                    <span class="score-text text-purple-300 font-mono font-bold text-lg"></span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                    <div class="progress-fill h-full bg-gradient-to-r from-purple-500 to-indigo-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]" style="width: 0%"></div>
+                                </div>
+                            `;
+                            lbContainer.appendChild(playerRow);
+                        }
+
+                        playerRow.style.top = `${idx * ROW_HEIGHT}px`;
+                        playerRow.querySelector('.rank-text').innerText = (idx + 1).toString().padStart(2, '0');
+                        playerRow.querySelector('.score-text').innerText = player.score.toLocaleString();
+                        
+                        const fillBar = playerRow.querySelector('.progress-fill');
+                        const newWidth = (player.score / maxScore) * 100;
+                        fillBar.style.width = `${newWidth}%`;
+                    });
+                }
+            } catch(e) {
+                console.error("Monitor Sync Error:", e);
+            }
+        }
+
+        setInterval(sync, 1500);
+        sync();
+    </script>
+</body>
+</html>
