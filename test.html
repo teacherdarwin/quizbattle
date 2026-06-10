@@ -59,7 +59,7 @@
             </div>
             <div class="flex items-center gap-4 flex-wrap justify-center">
                 <button onclick="openCreatorPanel()" class="px-5 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 border border-purple-400/50 text-xs font-bold text-white uppercase tracking-widest shadow-lg shadow-purple-900/40 transition active:scale-95">➕ Add Question</button>
-                <button onclick="clearHistory()" class="text-[10px] font-bold text-slate-400 hover:text-red-400 uppercase tracking-widest transition">Clear All Questions & History</button>
+                <button onclick="clearHistory()" class="text-[10px] font-bold text-slate-400 hover:text-red-400 uppercase tracking-widest transition">Wipe Grid & All Storage Memory</button>
                 <button onclick="toggleFullscreen()" class="px-4 py-2 rounded-full glass text-[10px] font-bold text-slate-300 hover:text-white uppercase tracking-widest transition flex items-center gap-2">
                     <span id="fs-icon">⛶</span> <span id="fs-text">Fullscreen</span>
                 </button>
@@ -69,18 +69,15 @@
             </div>
         </header>
         
-        <!-- GRID OVERVIEW -->
         <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"></div>
         
-        <!-- EMPTY STATE VIEW -->
         <div id="empty-state" class="hidden text-center py-24 border-2 border-dashed border-white/10 rounded-[3rem] glass">
             <span class="text-5xl block mb-4">💼</span>
             <h2 class="text-2xl font-bold text-slate-300">Your Quiz is Empty</h2>
-            <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">Click the <strong class="text-purple-400">Add Question</strong> button at the top to start building your interactive grid.</p>
+            <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">Click the <strong class="text-purple-400">Add Question</strong> button at the top to populate your dashboard.</p>
         </div>
     </div>
 
-    <!-- MAIN BOX MODAL (LIVE CONFIGURATION & EDITOR) -->
     <div id="modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md hidden flex items-center justify-center p-4 z-40 overflow-y-auto">
         <div class="glass border-purple-500/30 p-6 rounded-3xl max-w-xl w-full shadow-2xl relative my-8">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-600/20 blur-3xl rounded-full"></div>
@@ -88,12 +85,11 @@
             <div class="relative">
                 <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
                     <h3 class="text-lg font-bold text-purple-300 uppercase tracking-wide" id="modal-title">Box Configuration</h3>
-                    <div class="text-right">
+                    <div class="text-right flex items-center gap-4">
                         <span id="m-timer-display" class="text-xl font-black tabular-nums text-amber-400">0s</span>
                     </div>
                 </div>
 
-                <!-- LIVE EDITOR FORM -->
                 <div class="space-y-4 bg-white/5 rounded-2xl p-4 border border-white/10 mb-4 text-sm">
                     <div>
                         <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Question Prompt</label>
@@ -140,7 +136,6 @@
                     </div>
                 </div>
 
-                <!-- LIVE CONTROL ACTIONS -->
                 <div id="answer-box" class="mb-4 hidden">
                     <div class="bg-emerald-500/20 border border-emerald-500/30 rounded-2xl p-3 text-center">
                         <p class="text-[9px] text-emerald-400 uppercase tracking-widest font-bold mb-0.5">Answer Sent Status</p>
@@ -152,13 +147,16 @@
                 <div id="control-btns" class="space-y-2.5">
                     <button id="pushBtn" onclick="pushToLive()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider text-sm">🚀 Save & Push to Monitor</button>
                     <button id="revealBtn" onclick="revealAnswer()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 py-3.5 rounded-xl font-bold transition-all uppercase tracking-wider text-sm hidden">👁️ Reveal Answer to Players</button>
-                    <button onclick="closeModal()" class="w-full py-2 text-slate-400 hover:text-white transition text-xs font-semibold">Cancel & Close</button>
+                    
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
+                        <button onclick="deleteQuestion()" class="w-full bg-red-950/40 hover:bg-red-900 border border-red-500/30 text-red-200 py-2.5 rounded-xl font-bold text-xs transition uppercase tracking-wider">🗑️ Delete Question</button>
+                        <button onclick="closeModal()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 py-2.5 rounded-xl font-bold text-xs transition uppercase tracking-wider">Cancel & Close</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SIDEBAR SLIDEOUT PANEL (FOR CREATING BRAND NEW QUESTIONS) -->
     <div id="creator-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900/95 backdrop-blur-xl border-l border-white/10 p-8 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-bold text-purple-400 uppercase tracking-wider">Question Wizard</h3>
@@ -207,7 +205,7 @@
                     <input type="number" id="c-t" value="25" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
                 </div>
             </div>
-            <button onclick="saveCustomQuestion()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl uppercase tracking-widest mt-4 transition animate-pulse">Save to Question Bank</button>
+            <button onclick="saveCustomQuestion()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl uppercase tracking-widest mt-4 transition">Save to Question Bank</button>
         </div>
     </div>
 
@@ -217,7 +215,7 @@
         let countdownInterval = null;
         let timeLeft = 0;
         
-        // Load custom setup. Base questions have been removed to preserve the requested blank-slate state.
+        // Load configurations directly from permanent local memory storage targets
         let playedQuestions = JSON.parse(localStorage.getItem('playedBibleQuiz')) || [];
         let customQuestions = JSON.parse(localStorage.getItem('customBibleQuestions')) || [];
 
@@ -247,11 +245,11 @@
             const time = parseInt(document.getElementById('c-t').value) || 25;
 
             if(!qText || !optA || !optB || !optC || !optD) {
-                return alert("Please fill out all fields before saving.");
+                return alert("Please fulfill all question text fields.");
             }
 
             const newQ = {
-                id: "q-" + Date.now(), // Generate unique tracking timestamp ID
+                id: "q-" + Date.now(), 
                 p: pts,
                 q: qText,
                 opts: { A: optA, B: optB, C: optC, D: optD },
@@ -262,7 +260,7 @@
             customQuestions.push(newQ);
             localStorage.setItem('customBibleQuestions', JSON.stringify(customQuestions));
             
-            // Clear fields inside panel layout
+            // Flush entry buffers
             document.getElementById('c-q').value = "";
             document.getElementById('c-a').value = "";
             document.getElementById('c-b').value = "";
@@ -308,13 +306,12 @@
 
         function openQuestion(item, boxNumber, arrayIndex) {
             activeQ = item;
-            activeQ.index = arrayIndex; // Track index path position for effortless direct structural array modifying updates
+            activeQ.index = arrayIndex; 
             timeLeft = item.t;
             
             document.getElementById('modal-title').innerText = `Box ${boxNumber} Configuration`;
             document.getElementById('m-timer-display').innerText = timeLeft + "s";
             
-            // Load interactive configuration form parameters on click
             document.getElementById('edit-q').value = item.q;
             document.getElementById('edit-a').value = item.opts.A;
             document.getElementById('edit-b').value = item.opts.B;
@@ -345,7 +342,6 @@
                 return alert("Fields cannot be left blank.");
             }
 
-            // Save modifications instantly right back into original storage array reference index
             customQuestions[activeQ.index] = {
                 id: activeQ.id,
                 p: updatedP,
@@ -356,7 +352,6 @@
             };
             localStorage.setItem('customBibleQuestions', JSON.stringify(customQuestions));
             
-            // Sync live runtime tracker variables
             activeQ.q = updatedQ;
             activeQ.p = updatedP;
             activeQ.t = updatedT;
@@ -389,6 +384,23 @@
             btn.innerHTML = "<span>✅ BROADCASTING</span>";
             btn.className = "w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold uppercase tracking-wider text-sm";
             startTimer();
+        }
+
+        // --- NEW FEATURE: INDIVIDUAL DELETION HANDLING ENGINE ---
+        function deleteQuestion() {
+            if (!activeQ) return;
+            if (!confirm("Are you sure you want to permanently delete this specific question? This item will be removed completely from the grid array setup.")) return;
+            
+            // Remove the target question matching tracking index positioning maps
+            customQuestions.splice(activeQ.index, 1);
+            localStorage.setItem('customBibleQuestions', JSON.stringify(customQuestions));
+            
+            // Remove from tracking histories array context stack parameters if present
+            playedQuestions = playedQuestions.filter(id => id !== activeQ.id);
+            localStorage.setItem('playedBibleQuiz', JSON.stringify(playedQuestions));
+            
+            closeModal();
+            renderGrid();
         }
 
         function startTimer() {
@@ -427,10 +439,11 @@
             btn.className = "w-full bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider text-sm";
             btn.innerHTML = "🚀 Save & Push to Monitor";
             btn.disabled = false;
+            activeQ = null;
         }
 
         function clearHistory() {
-            if(confirm("Are you sure you want to completely erase all questions, edits, and play states?")) {
+            if(confirm("CRITICAL WARNING: This will permanently wipe ALL questions inside memory cache. Proceed?")) {
                 playedQuestions = [];
                 customQuestions = [];
                 localStorage.removeItem('playedBibleQuiz');
@@ -439,7 +452,6 @@
             }
         }
 
-        // Initialize setup on load
         renderGrid();
     </script>
 </body>
