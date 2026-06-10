@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Admin - Bible Quiz Pro</title>
+    <link rel="icon" type="image/png" href="IBMP.png">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top left, #2e1065, #0f172a);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-purple {
+            background: rgba(167, 139, 250, 0.12);
+            border-color: rgba(167, 139, 250, 0.25);
+        }
+        .glass-card:not(.spent):hover {
+            background: rgba(167, 139, 250, 0.22);
+            border-color: rgba(167, 139, 250, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+        .glass-card.spent {
+            opacity: 0.4;
+            filter: grayscale(0.5);
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #c084fc, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="text-slate-200 p-6 md:p-12 relative overflow-x-hidden">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight text-gradient">Briefcase Control</h1>
+                <p class="text-slate-400 text-sm mt-1 uppercase tracking-widest">Master Administrator Console</p>
+            </div>
+            <div class="flex items-center gap-4 flex-wrap justify-center">
+                <button onclick="openCreatorPanel()" class="px-4 py-2 rounded-full bg-purple-600/30 border border-purple-500/50 text-[10px] font-bold text-purple-300 hover:bg-purple-600 hover:text-white uppercase tracking-widest transition">➕ Add Custom Question</button>
+                <button onclick="clearHistory()" class="text-[10px] font-bold text-slate-400 hover:text-red-400 uppercase tracking-widest transition">Clear History & Edits</button>
+                <button onclick="toggleFullscreen()" class="px-4 py-2 rounded-full glass text-[10px] font-bold text-slate-300 hover:text-white uppercase tracking-widest transition flex items-center gap-2">
+                    <span id="fs-icon">⛶</span> <span id="fs-text">Fullscreen</span>
+                </button>
+                <div class="px-4 py-2 rounded-full glass text-xs font-semibold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> SYSTEM LIVE
+                </div>
+            </div>
+        </header>
+        
+        <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"></div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md hidden flex items-center justify-center p-4 z-40 overflow-y-auto">
+        <div class="glass border-purple-500/30 p-6 rounded-3xl max-w-xl w-full shadow-2xl relative my-8">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-600/20 blur-3xl rounded-full"></div>
+            
+            <div class="relative">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
+                    <h3 class="text-lg font-bold text-purple-300 uppercase tracking-wide" id="modal-title">Box Configuration</h3>
+                    <div class="text-right">
+                        <span id="m-timer-display" class="text-xl font-black tabular-nums text-amber-400">0s</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4 bg-white/5 rounded-2xl p-4 border border-white/10 mb-4 text-sm">
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Question Prompt</label>
+                        <textarea id="edit-q" rows="2" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-purple-500 font-medium"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option A</label>
+                            <input type="text" id="edit-a" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option B</label>
+                            <input type="text" id="edit-b" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option C</label>
+                            <input type="text" id="edit-c" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option D</label>
+                            <input type="text" id="edit-d" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Correct Answer</label>
+                            <select id="edit-ans" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white font-bold focus:outline-none">
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Points</label>
+                            <input type="number" id="edit-p" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Timer (Sec)</label>
+                            <input type="number" id="edit-t" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="answer-box" class="mb-4 hidden">
+                    <div class="bg-emerald-500/20 border border-emerald-500/30 rounded-2xl p-3 text-center">
+                        <p class="text-[9px] text-emerald-400 uppercase tracking-widest font-bold mb-0.5">Answer Sent Status</p>
+                        <p id="m-ans-display" class="text-lg font-bold text-emerald-300 uppercase"></p>
+                    </div>
+                    <button onclick="resetSystem()" class="mt-3 w-full py-2.5 rounded-xl font-bold transition glass hover:bg-red-500/20 text-red-400 border-red-500/20 text-xs">RESET & CLOSE SESSION</button>
+                </div>
+
+                <div id="control-btns" class="space-y-2.5">
+                    <button id="pushBtn" onclick="pushToLive()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider text-sm">🚀 Save & Push to Monitor</button>
+                    <button id="revealBtn" onclick="revealAnswer()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 py-3.5 rounded-xl font-bold transition-all uppercase tracking-wider text-sm hidden">👁️ Reveal Answer to Players</button>
+                    <button onclick="closeModal()" class="w-full py-2 text-slate-400 hover:text-white transition text-xs font-semibold">Cancel & Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="creator-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900/95 backdrop-blur-xl border-l border-white/10 p-8 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-purple-400 uppercase tracking-wider">Question Wizard</h3>
+            <button onclick="closeCreatorPanel()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+        </div>
+        
+        <div class="space-y-4 text-sm">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Question Prompt</label>
+                <textarea id="c-q" rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500" placeholder="Type question statement..."></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option A</label>
+                    <input type="text" id="c-a" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option B</label>
+                    <input type="text" id="c-b" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option C</label>
+                    <input type="text" id="c-c" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option D</label>
+                    <input type="text" id="c-d" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Correct Answer Value</label>
+                <select id="c-ans" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500 font-bold">
+                    <option value="A">OPTION A</option>
+                    <option value="B">OPTION B</option>
+                    <option value="C">OPTION C</option>
+                    <option value="D">OPTION D</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Points Allocated</label>
+                    <input type="number" id="c-p" value="100" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Timer (Seconds)</label>
+                    <input type="number" id="c-t" value="25" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+                </div>
+            </div>
+            <button onclick="saveCustomQuestion()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl uppercase tracking-widest mt-4 transition">Save to Question Bank</button>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK2LR8MlREunfGh3bSC0wPZ2oD7N9_YNN0M941hi5rsCwOmNl7TXmNyklwNN3qNRKQ/exec"; 
+        let activeQ = null;
+        let countdownInterval = null;
+        let timeLeft = 0;
+        
+        let playedQuestions = JSON.parse(localStorage.getItem('playedBibleQuiz')) || [];
+        let customQuestions = JSON.parse(localStorage.getItem('customBibleQuestions')) || [];
+        let editedQuestions = JSON.parse(localStorage.getItem('editedBibleQuestions')) || {};
+
+        const baseQuestions = [
+            { id: 1, p: 50, q: "What was the name of the first man created by God?", opts: {A:"Noah", B:"Abraham", C:"Adam", D:"Moses"}, ans: "C", t: 25 },
+            { id: 2, p: 200, q: "What was the name of the high priest who helped hide Joash from Athaliah?", opts: {A:"Jehoiada", B:"Abiathar", C:"Zadok", D:"Hilkiah"}, ans: "A", t: 25 },
+            { id: 3, p: 300, q: "Which prophet married a prostitute as a picture of Israel’s unfaithfulness?", opts: {A:"Jeremiah", B:"Hosea", C:"Ezekiel", D:"Amos"}, ans: "B", t: 25 },
+            { id: 4, p: 150, q: "Into what kind of animal did Jesus cast a legion of demons in the Gerasenes region?", opts: {A:"Sheep", B:"Goats", C:"Cattle", D:"Swine"}, ans: "D", t: 25 },
+            { id: 5, p: 200, q: "What was the name of Abraham’s brother who died in Ur of the Chaldees?", opts: {A:"Haran", B:"Nahor", C:"Lot", D:"Terah"}, ans: "A", t: 25 },
+            { id: 6, p: 100, q: "What was the name of Abram’s wife?", opts: {A:"Milcah", B:"Sarai", C:"Keturah", D:"Hagar"}, ans: "B", t: 25 },
+            { id: 7, p: 100, q: "What weapon did David use to defeat the giant Goliath?", opts: {A:"Spear", B:"Sword", C:"Sling", D:"Bow"}, ans: "C", t: 25 },
+            { id: 8, p: 50, q: "Who was the mother of Samuel the prophet?", opts: {A:"Hannah", B:"Peninnah", C:"Rachel", D:"Leah"}, ans: "A", t: 25 },
+            { id: 9, p: 50, q: "Which prophet challenged the prophets of Baal on Mount Carmel?", opts: {A:"Elisha", B:"Elijah", C:"Isaiah", D:"Jeremiah"}, ans: "B", t: 25 },
+            { id: 10, p: 150, q: "Which book of the Bible immediately follows Genesis?", opts: {A:"Leviticus", B:"Numbers", C:"Deuteronomy", D:"Exodus"}, ans: "D", t: 25 },
+            { id: 11, p: 350, q: "What was the name of the specific valley where David fought and defeated Goliath?", opts: {A:"Jezreel", B:"Elah", C:"Jordan", D:"Achor"}, ans: "B", t: 25 },
+            { id: 12, p: 300, q: "What type of wood did God explicitly command Noah to use when building the ark?", opts: {A:"Cedar", B:"Oak", C:"Gopher", D:"Acacia"}, ans: "C", t: 25 },
+            { id: 13, p: 400, q: "Who was the sorcerer struck blind by Paul for trying to turn a proconsul away?", opts: {A:"Simon", B:"Elymas", C:"Bar-Jesus", D:"Hermogenes"}, ans: "B", t: 25 },
+            { id: 14, p: 250, q: "What was the name of the youngest son of Jacob and Rachel?", opts: {A:"Joseph", B:"Benjamin", C:"Dan", D:"Gad"}, ans: "B", t: 25 },
+            { id: 15, p: 250, q: "What island was Paul shipwrecked on?", opts: {A:"Crete", B:"Cyprus", C:"Malta", D:"Patmos"}, ans: "C", t: 25 },
+            { id: 16, p: 50, q: "Who was the tax collector that climbed a sycamore tree to see Jesus?", opts: {A:"Matthew", B:"Zacchaeus", C:"Levi", D:"Bartimaeus"}, ans: "B", t: 25 },
+            { id: 17, p: 200, q: "Which disciple doubted Jesus’ resurrection until he saw Him personally?", opts: {A:"Thomas", B:"Peter", C:"Andrew", D:"Philip"}, ans: "A", t: 25 },
+            { id: 18, p: 250, q: "Which queen of Israel sought to execute the prophet Elijah after Mount Carmel?", opts: {A:"Athaliah", B:"Vashti", C:"Esther", D:"Jezebel"}, ans: "D", t: 25 },
+            { id: 19, p: 400, q: "What was the name of the sorcerer who tried to buy the power of the Holy Spirit?", opts: {A:"Elymas", B:"Simon", C:"Alexander", D:"Philetus"}, ans: "B", t: 25 },
+            { id: 20, p: 500, q: "Where was the Ark captured by the Philistines and taken to the temple of Dagon?", opts: {A:"Gaza", B:"Ashdod", C:"Ekron", D:"Gath"}, ans: "B", t: 25 }
+        ];
+
+        let questions = [];
+
+        function compileQuestionsList() {
+            questions = baseQuestions.map(item => {
+                if (editedQuestions[item.id]) {
+                    return { ...item, ...editedQuestions[item.id] };
+                }
+                return item;
+            });
+            questions = [...questions, ...customQuestions];
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => { console.error(err.message); });
+                document.getElementById('fs-text').innerText = "Exit";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    document.getElementById('fs-text').innerText = "Fullscreen";
+                }
+            }
+        }
+
+        function openCreatorPanel() { document.getElementById('creator-panel').classList.remove('translate-x-full'); }
+        function closeCreatorPanel() { document.getElementById('creator-panel').classList.add('translate-x-full'); }
+
+        function saveCustomQuestion() {
+            const qText = document.getElementById('c-q').value.trim();
+            const optA = document.getElementById('c-a').value.trim();
+            const optB = document.getElementById('c-b').value.trim();
+            const optC = document.getElementById('c-c').value.trim();
+            const optD = document.getElementById('c-d').value.trim();
+            const correctAns = document.getElementById('c-ans').value;
+            const pts = parseInt(document.getElementById('c-p').value) || 100;
+            const time = parseInt(document.getElementById('c-t').value) || 25;
+
+            if(!qText || !optA || !optB || !optC || !optD) {
+                return alert("Please fulfill all question text fields.");
+            }
+
+            const newQ = {
+                id: "custom-" + Date.now(),
+                p: pts,
+                q: qText,
+                opts: { A: optA, B: optB, C: optC, D: optD },
+                ans: correctAns,
+                t: time
+            };
+
+            customQuestions.push(newQ);
+            localStorage.setItem('customBibleQuestions', JSON.stringify(customQuestions));
+            
+            document.getElementById('c-q').value = "";
+            document.getElementById('c-a').value = "";
+            document.getElementById('c-b').value = "";
+            document.getElementById('c-c').value = "";
+            document.getElementById('c-d').value = "";
+            
+            closeCreatorPanel();
+            renderGrid();
+        }
+
+        function renderGrid() {
+            compileQuestionsList();
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            questions.forEach((item, index) => {
+                const isPlayed = playedQuestions.includes(item.id);
+                const isEdited = editedQuestions[item.id] !== undefined;
+                const btn = document.createElement('div');
+                btn.id = `box-${item.id}`;
+                btn.className = `glass-card card-purple p-6 rounded-[2rem] cursor-pointer flex flex-col items-center justify-center text-center group ${isPlayed ? 'spent' : ''}`;
+                
+                btn.innerHTML = `
+                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-purple-500/30 transition-all duration-300 shadow-inner">
+                        <span class="text-2xl">${isPlayed ? '✔️' : '💼'}</span>
+                    </div>
+                    <div class="text-xs font-black text-purple-300 tracking-[0.2em] uppercase">Box ${index + 1}</div>
+                    <div class="text-[10px] text-slate-400 mt-1 uppercase font-mono">${item.p} Pts ${isEdited ? '(Edited)' : ''}</div>
+                `;
+
+                btn.onclick = () => openQuestion(item, index + 1);
+                grid.appendChild(btn);
+            });
+        }
+
+        function openQuestion(item, boxIndex) {
+            activeQ = item;
+            timeLeft = item.t;
+            
+            document.getElementById('modal-title').innerText = `Box ${boxIndex} Configuration`;
+            document.getElementById('m-timer-display').innerText = timeLeft + "s";
+            
+            // Populate the input fields directly so the admin can edit them immediately
+            document.getElementById('edit-q').value = item.q;
+            document.getElementById('edit-a').value = item.opts.A;
+            document.getElementById('edit-b').value = item.opts.B;
+            document.getElementById('edit-c').value = item.opts.C;
+            document.getElementById('edit-d').value = item.opts.D;
+            document.getElementById('edit-ans').value = item.ans;
+            document.getElementById('edit-p').value = item.p;
+            document.getElementById('edit-t').value = item.t;
+            
+            document.getElementById('answer-box').classList.add('hidden');
+            document.getElementById('revealBtn').classList.add('hidden');
+            document.getElementById('pushBtn').classList.remove('hidden');
+            document.getElementById('modal').classList.remove('hidden');
+            clearInterval(countdownInterval);
+        }
+
+        async function pushToLive() {
+            // Read potentially modified inputs directly from fields inside the configuration modal
+            const updatedQ = document.getElementById('edit-q').value.trim();
+            const updatedA = document.getElementById('edit-a').value.trim();
+            const updatedB = document.getElementById('edit-b').value.trim();
+            const updatedC = document.getElementById('edit-c').value.trim();
+            const updatedD = document.getElementById('edit-d').value.trim();
+            const updatedAns = document.getElementById('edit-ans').value;
+            const updatedP = parseInt(document.getElementById('edit-p').value) || 100;
+            const updatedT = parseInt(document.getElementById('edit-t').value) || 25;
+
+            if(!updatedQ || !updatedA || !updatedB || !updatedC || !updatedD) {
+                return alert("Question items cannot be empty string states.");
+            }
+
+            // Save adjustments to persistent local modification states cache registry 
+            editedQuestions[activeQ.id] = {
+                q: updatedQ,
+                p: updatedP,
+                t: updatedT,
+                ans: updatedAns,
+                opts: { A: updatedA, B: updatedB, C: updatedC, D: updatedD }
+            };
+            localStorage.setItem('editedBibleQuestions', JSON.stringify(editedQuestions));
+            
+            // Re-map structural parameters locally
+            activeQ.q = updatedQ;
+            activeQ.p = updatedP;
+            activeQ.t = updatedT;
+            activeQ.ans = updatedAns;
+            activeQ.opts = { A: updatedA, B: updatedB, C: updatedC, D: updatedD };
+            
+            timeLeft = updatedT;
+
+            const btn = document.getElementById('pushBtn');
+            btn.innerHTML = "<span>⏳ SENDING...</span>"; btn.disabled = true;
+            
+            await fetch(SCRIPT_URL, {
+                method: "POST", mode: "no-cors",
+                body: JSON.stringify({ 
+                    action: "pushQuestion", 
+                    q: activeQ.q, 
+                    p: activeQ.p, 
+                    t: activeQ.t, 
+                    ans: activeQ.ans, 
+                    reveal: false,
+                    opts: activeQ.opts
+                })
+            });
+            
+            if (!playedQuestions.includes(activeQ.id)) {
+                playedQuestions.push(activeQ.id);
+                localStorage.setItem('playedBibleQuiz', JSON.stringify(playedQuestions));
+            }
+            
+            renderGrid();
+            btn.innerHTML = "<span>✅ BROADCASTING</span>";
+            btn.classList.replace('bg-purple-600', 'bg-blue-600');
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(countdownInterval);
+            const timerEl = document.getElementById('m-timer-display');
+            countdownInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    timerEl.innerText = timeLeft + "s";
+                } else {
+                    clearInterval(countdownInterval);
+                    timerEl.innerText = "TIME'S UP";
+                    document.getElementById('m-ans-display').innerText = `(${activeQ.ans}) ${activeQ.opts[activeQ.ans]}`;
+                    document.getElementById('revealBtn').classList.remove('hidden');
+                    document.getElementById('pushBtn').classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        async function revealAnswer() {
+            document.getElementById('answer-box').classList.remove('hidden');
+            document.getElementById('revealBtn').classList.add('hidden');
+            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "revealAnswer", reveal: true }) });
+        }
+
+        async function resetSystem() {
+            if(!confirm("Clear live display?")) return;
+            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "reset" }) });
+            closeModal();
+        }
+
+        function closeModal() { 
+            document.getElementById('modal').classList.add('hidden'); 
+            clearInterval(countdownInterval);
+            const btn = document.getElementById('pushBtn');
+            btn.className = "w-full bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider text-sm";
+            btn.innerHTML = "🚀 Save & Push to Monitor";
+            btn.disabled = false;
+        }
+
+        function clearHistory() {
+            if(confirm("Reset history, remove custom additions, and clear edits?")) {
+                playedQuestions = [];
+                customQuestions = [];
+                editedQuestions = {};
+                localStorage.removeItem('playedBibleQuiz');
+                localStorage.removeItem('customBibleQuestions');
+                localStorage.removeItem('editedBibleQuestions');
+                renderGrid();
+            }
+        }
+
+        renderGrid();
+    </script>
+</body>
+</html>
