@@ -4,455 +4,367 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <title>Admin - Bible Quiz Pro</title>
-    <link rel="icon" type="image/png" href="IBMP.png">
+    <title>Player - Quiz Pro</title>
+    <link rel="icon" type="image/png" href="DARWIN.png">
+    
     <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at top left, #2e1065, #0f172a);
-            min-height: 100vh;
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: radial-gradient(circle at bottom left, #1e1b4b, #0f172a); 
+            min-height: 100vh; 
+            color: white; 
+            margin: 0;
+            overflow-x: hidden;
         }
-        .glass {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        .glass { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .timer-low { 
+            color: #f87171; 
+            animation: pulse 1s infinite; 
         }
-        .card-purple {
-            background: rgba(167, 139, 250, 0.12);
-            border-color: rgba(167, 139, 250, 0.25);
-        }
-        .glass-card:not(.spent):hover {
-            background: rgba(167, 139, 250, 0.22);
-            border-color: rgba(167, 139, 250, 0.5);
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-        }
-        .glass-card.spent {
-            opacity: 0.4;
-            filter: grayscale(0.5);
-            background: rgba(34, 197, 94, 0.1);
-            border-color: rgba(34, 197, 94, 0.3);
-        }
-        .text-gradient {
-            background: linear-gradient(to right, #c084fc, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        @keyframes pulse { 
+            0%, 100% { opacity: 1; } 
+            50% { opacity: 0.5; } 
         }
     </style>
 </head>
-<body class="text-slate-200 p-6 md:p-12 relative overflow-x-hidden">
+<body class="relative flex items-center justify-center p-4 min-h-screen">
 
-    <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-            <div>
-                <h1 class="text-4xl font-extrabold tracking-tight text-gradient">Briefcase Control</h1>
-                <p class="text-slate-400 text-sm mt-1 uppercase tracking-widest">Master Administrator Console</p>
-            </div>
-            <div class="flex items-center gap-4 flex-wrap justify-center">
-                <button onclick="openCreatorPanel()" class="px-5 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 border border-purple-400/50 text-xs font-bold text-white uppercase tracking-widest shadow-lg shadow-purple-900/40 transition active:scale-95">➕ Add Question</button>
-                <button onclick="clearHistory()" class="text-[10px] font-bold text-slate-400 hover:text-red-400 uppercase tracking-widest transition">Wipe Grid & All Storage Memory</button>
-                <button onclick="toggleFullscreen()" class="px-4 py-2 rounded-full glass text-[10px] font-bold text-slate-300 hover:text-white uppercase tracking-widest transition flex items-center gap-2">
-                    <span id="fs-icon">⛶</span> <span id="fs-text">Fullscreen</span>
-                </button>
-                <div class="px-4 py-2 rounded-full glass text-xs font-semibold flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> SYSTEM LIVE
-                </div>
-            </div>
-        </header>
-        
-        <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8"></div>
-        
-        <div id="empty-state" class="hidden text-center py-24 border-2 border-dashed border-white/10 rounded-[3rem] glass">
-            <span class="text-5xl block mb-4">💼</span>
-            <h2 class="text-2xl font-bold text-slate-300">Your Quiz is Empty</h2>
-            <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">Click the <strong class="text-purple-400">Add Question</strong> button at the top to populate your dashboard.</p>
+    <div id="falling-pattern-root" class="absolute inset-0 z-0 pointer-events-none w-full h-full overflow-hidden"></div>
+
+    <div class="relative z-10 w-full flex justify-center items-center">
+        <div id="setup-ui" class="glass p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-extrabold mb-2 text-purple-400">Join the Quiz</h2>
+            <p class="text-slate-400 text-sm mb-6">Enter your name to register for the live session.</p>
+            <input type="text" id="team-name" placeholder="YOUR NAME / TEAM" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 font-bold tracking-widest uppercase focus:outline-none focus:border-purple-500 text-center">
+            <button id="join-btn" onclick="joinGame()" class="w-full bg-purple-600 hover:bg-purple-500 p-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95">Connect to Live</button>
         </div>
-    </div>
 
-    <div id="modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md hidden flex items-center justify-center p-4 z-40 overflow-y-auto">
-        <div class="glass border-purple-500/30 p-6 rounded-3xl max-w-xl w-full shadow-2xl relative my-8">
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-600/20 blur-3xl rounded-full"></div>
-            
-            <div class="relative">
-                <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
-                    <h3 class="text-lg font-bold text-purple-300 uppercase tracking-wide" id="modal-title">Box Configuration</h3>
-                    <div class="text-right flex items-center gap-4">
-                        <span id="m-timer-display" class="text-xl font-black tabular-nums text-amber-400">0s</span>
-                    </div>
+        <div id="game-ui" class="hidden w-full max-w-2xl text-center">
+            <div class="glass p-6 rounded-3xl mb-6 flex justify-between items-center">
+                <div class="text-left">
+                    <p class="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Active Team</p>
+                    <h3 id="display-team" class="font-black text-xl uppercase italic">---</h3>
+                </div>
+                <div id="timer-box" class="hidden flex flex-col items-end">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time Remaining</p>
+                    <h3 id="timer-seconds" class="font-black text-2xl text-amber-400">25s</h3>
+                </div>
+            </div>
+
+            <div id="waiting-state" class="py-20">
+                <div class="animate-bounce mb-6 text-6xl">⏳</div>
+                <h2 class="text-3xl font-extrabold text-slate-300">Waiting for Question...</h2>
+            </div>
+
+            <div id="answer-state" class="hidden">
+                <div id="pts-badge" class="inline-block bg-amber-400 text-slate-900 px-4 py-1 rounded-full text-xs font-black mb-4">0 POINTS</div>
+                <h2 id="current-q" class="text-2xl md:text-3xl font-bold mb-8 text-white px-2">...</h2>
+                
+                <div id="input-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <button onclick="selectOption('A')" id="btn-optA" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">A</span>
+                        <span id="text-optA" class="tracking-wide">...</span>
+                    </button>
+                    <button onclick="selectOption('B')" id="btn-optB" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">B</span>
+                        <span id="text-optB" class="tracking-wide">...</span>
+                    </button>
+                    <button onclick="selectOption('C')" id="btn-optC" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">C</span>
+                        <span id="text-optC" class="tracking-wide">...</span>
+                    </button>
+                    <button onclick="selectOption('D')" id="btn-optD" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
+                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">D</span>
+                        <span id="text-optD" class="tracking-wide">...</span>
+                    </button>
                 </div>
 
-                <div class="space-y-4 bg-white/5 rounded-2xl p-4 border border-white/10 mb-4 text-sm">
-                    <div>
-                        <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Question Prompt</label>
-                        <textarea id="edit-q" rows="2" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-purple-500 font-medium"></textarea>
-                    </div>
+                <div id="blind-feedback" class="hidden mt-6 p-6 border-2 border-dashed border-white/20 rounded-3xl">
+                    <p id="status-text" class="text-emerald-400 font-bold mb-2 uppercase tracking-widest">Choice Locked In</p>
+                    <p id="sub-status" class="text-slate-400 text-sm mb-4 italic">Waiting for host to reveal verified solution...</p>
                     
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option A</label>
-                            <input type="text" id="edit-a" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option B</label>
-                            <input type="text" id="edit-b" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option C</label>
-                            <input type="text" id="edit-c" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Option D</label>
-                            <input type="text" id="edit-d" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Correct Answer</label>
-                            <select id="edit-ans" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white font-bold focus:outline-none">
-                                <option value="A">A</option>
-                                <option value="B">B</option>
-                                <option value="C">C</option>
-                                <option value="D">D</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Points</label>
-                            <input type="number" id="edit-p" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Timer (Sec)</label>
-                            <input type="number" id="edit-t" class="w-full bg-slate-900 border border-white/10 rounded-xl p-2 text-white focus:outline-none">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="answer-box" class="mb-4 hidden">
-                    <div class="bg-emerald-500/20 border border-emerald-500/30 rounded-2xl p-3 text-center">
-                        <p class="text-[9px] text-emerald-400 uppercase tracking-widest font-bold mb-0.5">Answer Sent Status</p>
-                        <p id="m-ans-display" class="text-lg font-bold text-emerald-300 uppercase"></p>
-                    </div>
-                    <button onclick="resetSystem()" class="mt-3 w-full py-2.5 rounded-xl font-bold transition glass hover:bg-red-500/20 text-red-400 border-red-500/20 text-xs">RESET & CLOSE SESSION</button>
-                </div>
-
-                <div id="control-btns" class="space-y-2.5">
-                    <button id="pushBtn" onclick="pushToLive()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider text-sm">🚀 Save & Push to Monitor</button>
-                    <button id="revealBtn" onclick="revealAnswer()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 py-3.5 rounded-xl font-bold transition-all uppercase tracking-wider text-sm hidden">👁️ Reveal Answer to Players</button>
-                    
-                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
-                        <button onclick="deleteQuestion()" class="w-full bg-red-950/40 hover:bg-red-900 border border-red-500/30 text-red-200 py-2.5 rounded-xl font-bold text-xs transition uppercase tracking-wider">🗑️ Delete Question</button>
-                        <button onclick="closeModal()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 py-2.5 rounded-xl font-bold text-xs transition uppercase tracking-wider">Cancel & Close</button>
+                    <div id="reveal-box" class="hidden bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/30">
+                        <p class="text-[10px] uppercase text-emerald-400 font-bold mb-1 tracking-wider">Correct Answer Option</p>
+                        <p id="reveal-answer" class="text-3xl font-black text-white">---</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="creator-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900/95 backdrop-blur-xl border-l border-white/10 p-8 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-purple-400 uppercase tracking-wider">Question Wizard</h3>
-            <button onclick="closeCreatorPanel()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
-        </div>
-        
-        <div class="space-y-4 text-sm">
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Question Prompt</label>
-                <textarea id="c-q" rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500" placeholder="Type question statement..."></textarea>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option A</label>
-                    <input type="text" id="c-a" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
+    <script type="text/babel">
+        const { motion } = Motion; // Bind framer-motion variables from global CDN reference
+
+        function FallingPattern({
+            color = 'rgba(147, 51, 234, 0.4)', // Using custom soft transparent purple for matrix styling
+            backgroundColor = 'transparent', 
+            duration = 160,
+            blurIntensity = '4px',
+            density = 1,
+            className = ""
+        }) {
+            const generateBackgroundImage = () => {
+                const patterns = [
+                    `radial-gradient(4px 100px at 0px 235px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 235px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 117.5px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 252px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 252px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 126px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 150px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 150px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 75px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 253px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 253px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 126.5px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 204px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 204px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 102px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 134px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 134px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 67px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 179px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 179px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 89.5px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 299px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 299px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 149.5px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 215px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 215px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 107.5px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 281px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 281px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 140.5px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 158px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 158px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 79px, ${color} 100%, transparent 150%)`,
+                    `radial-gradient(4px 100px at 0px 210px, ${color}, transparent)`,
+                    `radial-gradient(4px 100px at 300px 210px, ${color}, transparent)`,
+                    `radial-gradient(1.5px 1.5px at 150px 105px, ${color} 100%, transparent 150%)`
+                ];
+                return patterns.join(', ');
+            };
+
+            // Added missing 36th item to guarantee a proper match with startPositions & endPositions arrays
+            const backgroundSizes = [
+                '300px 235px','300px 235px','300px 235px',
+                '300px 252px','300px 252px','300px 252px',
+                '300px 150px','300px 150px','300px 150px',
+                '300px 253px','300px 253px','300px 253px',
+                '300px 204px','300px 204px','300px 204px',
+                '300px 134px','300px 134px','300px 134px',
+                '300px 179px','300px 179px','300px 179px',
+                '300px 299px','300px 299px','300px 299px',
+                '300px 215px','300px 215px','300px 215px',
+                '300px 281px','300px 281px','300px 281px',
+                '300px 158px','300px 158px','300px 158px',
+                '300px 210px','300px 210px','300px 210px'
+            ].join(', ');
+
+            const startPositions = '0px 220px, 3px 220px, 151.5px 337.5px, 25px 24px, 28px 24px, 176.5px 150px, 50px 16px, 53px 16px, 201.5px 91px, 75px 224px, 78px 224px, 226.5px 230.5px, 100px 19px, 103px 19px, 251.5px 121px, 125px 120px, 128px 120px, 276.5px 187px, 150px 31px, 153px 31px, 301.5px 120.5px, 175px 235px, 178px 235px, 326.5px 384.5px, 200px 121px, 203px 121px, 351.5px 228.5px, 225px 224px, 228px 224px, 376.5px 364.5px, 250px 26px, 253px 26px, 401.5px 105px, 275px 75px, 278px 75px, 426.5px 180px';
+            const endPositions = '0px 6800px, 3px 6800px, 151.5px 6917.5px, 25px 13632px, 28px 13632px, 176.5px 13758px, 50px 5416px, 53px 5416px, 201.5px 5491px, 75px 17175px, 78px 17175px, 226.5px 17301.5px, 100px 5119px, 103px 5119px, 251.5px 5221px, 125px 8428px, 128px 8428px, 276.5px 8495px, 150px 9876px, 153px 9876px, 301.5px 9965.5px, 175px 13391px, 178px 13391px, 326.5px 13540.5px, 200px 14741px, 203px 14741px, 351.5px 14848.5px, 225px 18770px, 228px 18770px, 376.5px 18910.5px, 250px 5082px, 253px 5082px, 401.5px 5161px, 275px 6375px, 278px 6375px, 426.5px 6480px';
+
+            return (
+                <div className={`relative h-full w-full ${className}`}>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                        className="w-full h-full"
+                    >
+                        <motion.div
+                            className="relative w-full h-full z-0"
+                            style={{
+                                backgroundColor,
+                                backgroundImage: generateBackgroundImage(),
+                                backgroundSize: backgroundSizes,
+                            }}
+                            variants={{
+                                initial: { backgroundPosition: startPositions },
+                                animate: {
+                                    backgroundPosition: [startPositions, endPositions],
+                                    transition: {
+                                        duration: duration,
+                                        ease: 'linear',
+                                        repeat: Infinity,
+                                    },
+                                },
+                            }}
+                            initial="initial"
+                            animate="animate"
+                        />
+                    </motion.div>
+                    <div
+                        className="absolute inset-0 z-1 pointer-events-none"
+                        style={{
+                            backdropFilter: `blur(${blurIntensity})`,
+                            backgroundImage: `radial-gradient(circle at 50% 50%, transparent 0, transparent 2px, rgba(15, 23, 42, 0.1) 2px)`,
+                            backgroundSize: `${8 * density}px ${8 * density}px`,
+                        }}
+                    />
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option B</label>
-                    <input type="text" id="c-b" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option C</label>
-                    <input type="text" id="c-c" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Option D</label>
-                    <input type="text" id="c-d" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                </div>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Correct Answer Value</label>
-                <select id="c-ans" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500 font-bold">
-                    <option value="A">OPTION A</option>
-                    <option value="B">OPTION B</option>
-                    <option value="C">OPTION C</option>
-                    <option value="D">OPTION D</option>
-                </select>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Points Allocated</label>
-                    <input type="number" id="c-p" value="100" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Timer (Seconds)</label>
-                    <input type="number" id="c-t" value="25" class="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white focus:outline-none focus:border-purple-500">
-                </div>
-            </div>
-            <button onclick="saveCustomQuestion()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl uppercase tracking-widest mt-4 transition">Save to Question Bank</button>
-        </div>
-    </div>
+            );
+        }
+
+        // Target wrapper element and render the final layout element pipeline
+        const root = ReactDOM.createRoot(document.getElementById('falling-pattern-root'));
+        root.render(<FallingPattern />);
+    </script>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK2LR8MlREunfGh3bSC0wPZ2oD7N9_YNN0M941hi5rsCwOmNl7TXmNyklwNN3qNRKQ/exec"; 
-        let activeQ = null;
-        let countdownInterval = null;
-        let timeLeft = 0;
-        
-        // Load configurations directly from permanent local memory storage targets
-        let playedQuestions = JSON.parse(localStorage.getItem('playedBibleQuiz')) || [];
-        let customQuestions = JSON.parse(localStorage.getItem('customBibleQuestions')) || [];
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK2LR8MlREunfGh3bSC0wPZ2oD7N9_YNN0M941hi5rsCwOmNl7TXmNyklwNN3qNRKQ/exec";
+        let teamName = "", currentCorrectAns = "", currentPoints = 0, hasSubmitted = false;
+        let timeLeft = 25; 
+        let timerInterval = null;
+        let activeQuestionId = "";
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => { console.error(err.message); });
-                document.getElementById('fs-text').innerText = "Exit";
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                    document.getElementById('fs-text').innerText = "Fullscreen";
-                }
-            }
+        async function joinGame() {
+            const input = document.getElementById('team-name');
+            const btn = document.getElementById('join-btn');
+            teamName = input.value.trim().toUpperCase();
+            if(!teamName) return alert("Please enter a valid handle name description.");
+
+            btn.innerText = "REGISTERING...";
+            btn.disabled = true;
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors", 
+                    body: JSON.stringify({ action: "registerPlayer", user: teamName })
+                });
+                document.getElementById('display-team').innerText = teamName;
+                document.getElementById('setup-ui').classList.add('hidden');
+                document.getElementById('game-ui').classList.remove('hidden');
+                setInterval(syncPlayer, 1500);
+            } catch (e) { alert("Error connecting to real-time service host node."); }
         }
 
-        function openCreatorPanel() { document.getElementById('creator-panel').classList.remove('translate-x-full'); }
-        function closeCreatorPanel() { document.getElementById('creator-panel').classList.add('translate-x-full'); }
-
-        function saveCustomQuestion() {
-            const qText = document.getElementById('c-q').value.trim();
-            const optA = document.getElementById('c-a').value.trim();
-            const optB = document.getElementById('c-b').value.trim();
-            const optC = document.getElementById('c-c').value.trim();
-            const optD = document.getElementById('c-d').value.trim();
-            const correctAns = document.getElementById('c-ans').value;
-            const pts = parseInt(document.getElementById('c-p').value) || 100;
-            const time = parseInt(document.getElementById('c-t').value) || 25;
-
-            if(!qText || !optA || !optB || !optC || !optD) {
-                return alert("Please fulfill all question text fields.");
-            }
-
-            const newQ = {
-                id: "q-" + Date.now(), 
-                p: pts,
-                q: qText,
-                opts: { A: optA, B: optB, C: optC, D: optD },
-                ans: correctAns,
-                t: time
-            };
-
-            customQuestions.push(newQ);
-            localStorage.setItem('customBibleQuestions', JSON.stringify(customQuestions));
-            
-            // Flush entry buffers
-            document.getElementById('c-q').value = "";
-            document.getElementById('c-a').value = "";
-            document.getElementById('c-b').value = "";
-            document.getElementById('c-c').value = "";
-            document.getElementById('c-d').value = "";
-            
-            closeCreatorPanel();
-            renderGrid();
-        }
-
-        function renderGrid() {
-            const grid = document.getElementById('grid');
-            const emptyState = document.getElementById('empty-state');
-            grid.innerHTML = '';
-            
-            if (customQuestions.length === 0) {
-                grid.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                return;
-            }
-
-            grid.classList.remove('hidden');
-            emptyState.classList.add('hidden');
-
-            customQuestions.forEach((item, index) => {
-                const isPlayed = playedQuestions.includes(item.id);
-                const btn = document.createElement('div');
-                btn.id = `box-${item.id}`;
-                btn.className = `glass-card card-purple p-6 rounded-[2rem] cursor-pointer flex flex-col items-center justify-center text-center group ${isPlayed ? 'spent' : ''}`;
+        async function syncPlayer() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?cb=${Date.now()}`);
+                const data = await res.json();
                 
-                btn.innerHTML = `
-                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-purple-500/30 transition-all duration-300 shadow-inner">
-                        <span class="text-2xl">${isPlayed ? '✔️' : '💼'}</span>
-                    </div>
-                    <div class="text-xs font-black text-purple-300 tracking-[0.2em] uppercase">Box ${index + 1}</div>
-                    <div class="text-[10px] text-slate-400 mt-1 uppercase font-mono">${item.p} Pts</div>
-                `;
+                if (data.status === "ACTIVE") {
+                    document.getElementById('waiting-state').classList.add('hidden');
+                    document.getElementById('answer-state').classList.remove('hidden');
+                    document.getElementById('timer-box').classList.remove('hidden');
+                    
+                    if (activeQuestionId !== data.question) {
+                        activeQuestionId = data.question;
+                        resetForNewQuestion(data);
+                    }
+                    
+                    document.getElementById('current-q').innerText = data.question;
+                    document.getElementById('pts-badge').innerText = data.points + " POINTS";
+                    
+                    if(data.opts) {
+                        document.getElementById('text-optA').innerText = data.opts.A || "...";
+                        document.getElementById('text-optB').innerText = data.opts.B || "...";
+                        document.getElementById('text-optC').innerText = data.opts.C || "...";
+                        document.getElementById('text-optD').innerText = data.opts.D || "...";
+                    }
 
-                btn.onclick = () => openQuestion(item, index + 1, index);
-                grid.appendChild(btn);
-            });
-        }
+                    currentCorrectAns = data.answer.toUpperCase();
+                    currentPoints = data.points;
 
-        function openQuestion(item, boxNumber, arrayIndex) {
-            activeQ = item;
-            activeQ.index = arrayIndex; 
-            timeLeft = item.t;
-            
-            document.getElementById('modal-title').innerText = `Box ${boxNumber} Configuration`;
-            document.getElementById('m-timer-display').innerText = timeLeft + "s";
-            
-            document.getElementById('edit-q').value = item.q;
-            document.getElementById('edit-a').value = item.opts.A;
-            document.getElementById('edit-b').value = item.opts.B;
-            document.getElementById('edit-c').value = item.opts.C;
-            document.getElementById('edit-d').value = item.opts.D;
-            document.getElementById('edit-ans').value = item.ans;
-            document.getElementById('edit-p').value = item.p;
-            document.getElementById('edit-t').value = item.t;
-            
-            document.getElementById('answer-box').classList.add('hidden');
-            document.getElementById('revealBtn').classList.add('hidden');
-            document.getElementById('pushBtn').classList.remove('hidden');
-            document.getElementById('modal').classList.remove('hidden');
-            clearInterval(countdownInterval);
-        }
-
-        async function pushToLive() {
-            const updatedQ = document.getElementById('edit-q').value.trim();
-            const updatedA = document.getElementById('edit-a').value.trim();
-            const updatedB = document.getElementById('edit-b').value.trim();
-            const updatedC = document.getElementById('edit-c').value.trim();
-            const updatedD = document.getElementById('edit-d').value.trim();
-            const updatedAns = document.getElementById('edit-ans').value;
-            const updatedP = parseInt(document.getElementById('edit-p').value) || 100;
-            const updatedT = parseInt(document.getElementById('edit-t').value) || 25;
-
-            if(!updatedQ || !updatedA || !updatedB || !updatedC || !updatedD) {
-                return alert("Fields cannot be left blank.");
-            }
-
-            customQuestions[activeQ.index] = {
-                id: activeQ.id,
-                p: updatedP,
-                q: updatedQ,
-                opts: { A: updatedA, B: updatedB, C: updatedC, D: updatedD },
-                ans: updatedAns,
-                t: updatedT
-            };
-            localStorage.setItem('customBibleQuestions', JSON.stringify(customQuestions));
-            
-            activeQ.q = updatedQ;
-            activeQ.p = updatedP;
-            activeQ.t = updatedT;
-            activeQ.ans = updatedAns;
-            activeQ.opts = { A: updatedA, B: updatedB, C: updatedC, D: updatedD };
-            timeLeft = updatedT;
-
-            const btn = document.getElementById('pushBtn');
-            btn.innerHTML = "<span>⏳ SENDING...</span>"; btn.disabled = true;
-            
-            await fetch(SCRIPT_URL, {
-                method: "POST", mode: "no-cors",
-                body: JSON.stringify({ 
-                    action: "pushQuestion", 
-                    q: activeQ.q, 
-                    p: activeQ.p, 
-                    t: activeQ.t, 
-                    ans: activeQ.ans, 
-                    reveal: false,
-                    opts: activeQ.opts
-                })
-            });
-            
-            if (!playedQuestions.includes(activeQ.id)) {
-                playedQuestions.push(activeQ.id);
-                localStorage.setItem('playedBibleQuiz', JSON.stringify(playedQuestions));
-            }
-            
-            renderGrid();
-            btn.innerHTML = "<span>✅ BROADCASTING</span>";
-            btn.className = "w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold uppercase tracking-wider text-sm";
-            startTimer();
-        }
-
-        // --- NEW FEATURE: INDIVIDUAL DELETION HANDLING ENGINE ---
-        function deleteQuestion() {
-            if (!activeQ) return;
-            if (!confirm("Are you sure you want to permanently delete this specific question? This item will be removed completely from the grid array setup.")) return;
-            
-            // Remove the target question matching tracking index positioning maps
-            customQuestions.splice(activeQ.index, 1);
-            localStorage.setItem('customBibleQuestions', JSON.stringify(customQuestions));
-            
-            // Remove from tracking histories array context stack parameters if present
-            playedQuestions = playedQuestions.filter(id => id !== activeQ.id);
-            localStorage.setItem('playedBibleQuiz', JSON.stringify(playedQuestions));
-            
-            closeModal();
-            renderGrid();
-        }
-
-        function startTimer() {
-            clearInterval(countdownInterval);
-            const timerEl = document.getElementById('m-timer-display');
-            countdownInterval = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    timerEl.innerText = timeLeft + "s";
+                    if (data.reveal === true || data.reveal === "true" || data.revealAnswer === true) {
+                        document.getElementById('reveal-box').classList.remove('hidden');
+                        document.getElementById('reveal-answer').innerText = `${currentCorrectAns}: ${data.opts ? data.opts[currentCorrectAns] : ''}`;
+                        document.getElementById('sub-status').innerText = "Host has revealed the official result details!";
+                    }
                 } else {
-                    clearInterval(countdownInterval);
-                    timerEl.innerText = "TIME'S UP";
-                    document.getElementById('m-ans-display').innerText = `(${activeQ.ans}) ${activeQ.opts[activeQ.ans]}`;
-                    document.getElementById('revealBtn').classList.remove('hidden');
-                    document.getElementById('pushBtn').classList.add('hidden');
+                    document.getElementById('waiting-state').classList.remove('hidden');
+                    document.getElementById('answer-state').classList.add('hidden');
+                    document.getElementById('timer-box').classList.add('hidden');
+                    activeQuestionId = "";
+                    clearInterval(timerInterval);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function resetForNewQuestion(data) {
+            hasSubmitted = false;
+            timeLeft = data.time || data.t || 25; 
+            
+            document.getElementById('input-container').classList.remove('hidden');
+            document.getElementById('blind-feedback').classList.add('hidden');
+            document.getElementById('reveal-box').classList.add('hidden');
+            document.getElementById('sub-status').innerText = "Waiting for host to reveal answer...";
+            document.getElementById('timer-seconds').innerText = timeLeft + "s";
+            document.getElementById('timer-seconds').classList.remove('timer-low');
+
+            ['A', 'B', 'C', 'D'].forEach(opt => {
+                const el = document.getElementById(`btn-opt${opt}`);
+                el.disabled = false;
+                el.className = "bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3 w-full";
+            });
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-seconds').innerText = timeLeft + "s";
+                if(timeLeft <= 5) document.getElementById('timer-seconds').classList.add('timer-low');
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (!hasSubmitted) timeoutAutoSubmit();
                 }
             }, 1000);
         }
 
-        async function revealAnswer() {
-            document.getElementById('answer-box').classList.remove('hidden');
-            document.getElementById('revealBtn').classList.add('hidden');
-            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "revealAnswer", reveal: true }) });
-        }
+        async function selectOption(pickedLetter) {
+            if(hasSubmitted) return;
+            hasSubmitted = true;
+            clearInterval(timerInterval);
 
-        async function resetSystem() {
-            if(!confirm("Clear live display monitor?")) return;
-            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "reset" }) });
-            closeModal();
-        }
+            ['A', 'B', 'C', 'D'].forEach(opt => {
+                const el = document.getElementById(`btn-opt${opt}`);
+                el.disabled = true;
+                if(opt === pickedLetter) {
+                    el.classList.add('bg-purple-600/80', 'border-purple-400');
+                } else {
+                    el.classList.add('opacity-40');
+                }
+            });
 
-        function closeModal() { 
-            document.getElementById('modal').classList.add('hidden'); 
-            clearInterval(countdownInterval);
-            const btn = document.getElementById('pushBtn');
-            btn.className = "w-full bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider text-sm";
-            btn.innerHTML = "🚀 Save & Push to Monitor";
-            btn.disabled = false;
-            activeQ = null;
-        }
+            document.getElementById('input-container').classList.add('hidden');
+            document.getElementById('blind-feedback').classList.remove('hidden');
+            document.getElementById('status-text').innerText = `Choice locked in: Option ${pickedLetter}`;
 
-        function clearHistory() {
-            if(confirm("CRITICAL WARNING: This will permanently wipe ALL questions inside memory cache. Proceed?")) {
-                playedQuestions = [];
-                customQuestions = [];
-                localStorage.removeItem('playedBibleQuiz');
-                localStorage.removeItem('customBibleQuestions');
-                renderGrid();
+            if(pickedLetter === currentCorrectAns) {
+                await fetch(SCRIPT_URL, {
+                    method: "POST", 
+                    mode: "no-cors",
+                    body: JSON.stringify({ 
+                        action: "submitScore", 
+                        user: teamName, 
+                        points: currentPoints 
+                    })
+                });
             }
         }
 
-        renderGrid();
+        function timeoutAutoSubmit() {
+            hasSubmitted = true;
+            ['A', 'B', 'C', 'D'].forEach(opt => {
+                document.getElementById(`btn-opt${opt}`).disabled = true;
+                document.getElementById(`btn-opt${opt}`).classList.add('opacity-40');
+            });
+            document.getElementById('input-container').classList.add('hidden');
+            document.getElementById('blind-feedback').classList.remove('hidden');
+            document.getElementById('status-text').innerText = "TIME RAN OUT (No Choice Sent)";
+        }
     </script>
 </body>
 </html>
