@@ -1,370 +1,388 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <title>Player - Quiz Pro</title>
-    <link rel="icon" type="image/png" href="DARWIN.png">
-    
-    <style>
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: radial-gradient(circle at bottom left, #1e1b4b, #0f172a); 
-            min-height: 100vh; 
-            color: white; 
-            margin: 0;
-            overflow-x: hidden;
-        }
-        .glass { 
-            background: rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-        }
-        .timer-low { 
-            color: #f87171; 
-            animation: pulse 1s infinite; 
-        }
-        @keyframes pulse { 
-            0%, 100% { opacity: 1; } 
-            50% { opacity: 0.5; } 
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Live — All-in-One Console</title>
+<style>
+  :root{--bg:#0f1226;--card:#1a1f3d;--accent:#4f7cff;--green:#2ecc71;--red:#e74c3c;--gold:#f1c40f;--text:#eef1ff}
+  *{box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+  body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
+  .hidden{display:none!important}
+  .btn{background:var(--accent);color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:15px;cursor:pointer;font-weight:600}
+  .btn:hover{filter:brightness(1.15)}
+  .btn.gray{background:#3a4166}.btn.danger{background:var(--red)}.btn.green{background:var(--green)}
+  input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #3a4166;background:#12163a;color:var(--text);font-size:15px}
+  label{display:block;margin:10px 0 4px;font-size:13px;color:#9aa3d0}
+
+  /* ROLE LOGIN */
+  #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:18px}
+  #loginScreen h1{margin:0;font-size:34px}
+  .roleCards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+  .roleCard{background:var(--card);padding:30px 26px;border-radius:16px;width:260px;text-align:center;cursor:pointer;border:2px solid transparent;transition:.2s}
+  .roleCard:hover{border-color:var(--accent);transform:translateY(-4px)}
+  .roleCard .ico{font-size:44px}
+
+  /* ADMIN */
+  #adminApp header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:#141938}
+  #bank{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:20px 24px}
+  .qcard{background:var(--card);border-radius:12px;padding:16px;border-left:4px solid var(--accent);cursor:pointer;position:relative}
+  .qcard .type{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1px}
+  .badge{position:absolute;top:10px;right:10px;font-size:11px;background:var(--green);padding:3px 9px;border-radius:20px}
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modalBox{background:var(--card);padding:28px;border-radius:16px;width:min(480px,92vw);max-height:90vh;overflow:auto}
+  .row{display:flex;gap:10px;margin-top:18px}
+
+  /* PLAYER */
+  #playerApp{max-width:640px;margin:0 auto;padding:24px}
+  .panel{background:var(--card);border-radius:16px;padding:24px;margin-bottom:18px}
+  .timer{font-size:36px;font-weight:800;color:var(--gold)}
+  .opt{display:block;width:100%;text-align:left;background:#12163a;border:2px solid #3a4166;color:var(--text);padding:16px;border-radius:12px;margin-bottom:10px;font-size:16px;cursor:pointer;transition:.15s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.sel{border-color:var(--gold)}
+  .opt.correct{border-color:var(--green);background:rgba(46,204,113,.15)}
+  .opt.wrong{border-color:var(--red);background:rgba(231,76,60,.15)}
+  .opt:disabled{cursor:not-allowed}
+  .correctBox{border:2px solid var(--green);border-radius:12px;padding:18px;margin-top:14px;background:rgba(46,204,113,.1)}
+  .pts{font-size:22px;font-weight:700;color:var(--gold)}
+  .status{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#9aa3d0}
+  h2,h3{margin:0 0 12px}
+</style>
 </head>
-<body class="relative flex items-center justify-center p-4 min-h-screen">
+<body>
 
-    <div id="falling-pattern-root" class="absolute inset-0 z-0 pointer-events-none w-full h-full overflow-hidden"></div>
-
-    <div class="relative z-10 w-full flex justify-center items-center">
-        <div id="setup-ui" class="glass p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-extrabold mb-2 text-purple-400">Join the Quiz</h2>
-            <p class="text-slate-400 text-sm mb-6">Enter your name to register for the live session.</p>
-            <input type="text" id="team-name" placeholder="YOUR NAME / TEAM" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 font-bold tracking-widest uppercase focus:outline-none focus:border-purple-500 text-center">
-            <button id="join-btn" onclick="joinGame()" class="w-full bg-purple-600 hover:bg-purple-500 p-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95">Connect to Live</button>
-        </div>
-
-        <div id="game-ui" class="hidden w-full max-w-2xl text-center">
-            <div class="glass p-6 rounded-3xl mb-6 flex justify-between items-center">
-                <div class="text-left">
-                    <p class="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Active Team</p>
-                    <h3 id="display-team" class="font-black text-xl uppercase italic">---</h3>
-                </div>
-                <div id="timer-box" class="hidden flex flex-col items-end">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time Remaining</p>
-                    <h3 id="timer-seconds" class="font-black text-2xl text-amber-400">25s</h3>
-                </div>
-            </div>
-
-            <div id="waiting-state" class="py-20">
-                <div class="animate-bounce mb-6 text-6xl">⏳</div>
-                <h2 class="text-3xl font-extrabold text-slate-300">Waiting for Question...</h2>
-            </div>
-
-            <div id="answer-state" class="hidden">
-                <div id="pts-badge" class="inline-block bg-amber-400 text-slate-900 px-4 py-1 rounded-full text-xs font-black mb-4">0 POINTS</div>
-                <h2 id="current-q" class="text-2xl md:text-3xl font-bold mb-8 text-white px-2">...</h2>
-                
-                <div id="input-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <button onclick="selectOption('A')" id="btn-optA" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
-                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">A</span>
-                        <span id="text-optA" class="tracking-wide">...</span>
-                    </button>
-                    <button onclick="selectOption('B')" id="btn-optB" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
-                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">B</span>
-                        <span id="text-optB" class="tracking-wide">...</span>
-                    </button>
-                    <button onclick="selectOption('C')" id="btn-optC" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
-                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">C</span>
-                        <span id="text-optC" class="tracking-wide">...</span>
-                    </button>
-                    <button onclick="selectOption('D')" id="btn-optD" class="bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3">
-                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">D</span>
-                        <span id="text-optD" class="tracking-wide">...</span>
-                    </button>
-                </div>
-
-                <div id="blind-feedback" class="hidden mt-6 p-6 border-2 border-dashed border-white/20 rounded-3xl">
-                    <p id="status-text" class="text-emerald-400 font-bold mb-2 uppercase tracking-widest">Choice Locked In</p>
-                    <p id="sub-status" class="text-slate-400 text-sm mb-4 italic">Waiting for host to reveal verified solution...</p>
-                    
-                    <div id="reveal-box" class="hidden bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/30">
-                        <p class="text-[10px] uppercase text-emerald-400 font-bold mb-1 tracking-wider">Correct Answer Option</p>
-                        <p id="reveal-answer" class="text-3xl font-black text-white">---</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- ========== ROLE LOGIN ========== -->
+<div id="loginScreen">
+  <h1>🎮 Quiz Live</h1>
+  <p style="color:#9aa3d0">Choose your role to continue</p>
+  <div class="roleCards">
+    <div class="roleCard" onclick="pickRole('admin')">
+      <div class="ico">💼</div><h3>Host / Admin</h3><p style="color:#9aa3d0">Control the live session</p>
     </div>
+    <div class="roleCard" onclick="pickRole('player')">
+      <div class="ico">🙋</div><h3>Player</h3><p style="color:#9aa3d0">Join and answer questions</p>
+    </div>
+  </div>
+  <div id="adminPinBox" class="hidden modalBox" style="text-align:center">
+    <h3>🔐 Admin Access</h3>
+    <p style="color:#9aa3d0">Enter the administrator code</p>
+    <input type="password" id="pinInput" placeholder="Admin code" style="text-align:center;font-size:20px;letter-spacing:6px">
+    <div class="row"><button class="btn" style="width:100%" onclick="verifyPin()">Unlock Console</button></div>
+    <p id="pinErr" style="color:var(--red);display:none">Incorrect code. Try again.</p>
+  </div>
+  <div id="playerNameBox" class="hidden modalBox" style="text-align:center">
+    <h3>🙋 Join the Quiz</h3>
+    <p style="color:#9aa3d0">Enter your name to register for the live session</p>
+    <input id="playerName" placeholder="Your name">
+    <div class="row"><button class="btn green" style="width:100%" onclick="joinAsPlayer()">Connect to Live</button></div>
+  </div>
+</div>
 
-    <script type="text/babel">
-        const { motion } = Motion; // Bind framer-motion variables from global CDN reference
+<!-- ========== ADMIN APP ========== -->
+<div id="adminApp" class="hidden">
+  <header>
+    <div><h2 style="margin:0">💼 Briefcase Control</h2><span class="status" id="sysStatus">● SYSTEM LIVE</span></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" onclick="openWizard()">➕ Add Question</button>
+      <button class="btn danger" onclick="wipeAll()">Wipe All</button>
+      <button class="btn gray" onclick="toggleFS()">⛶</button>
+      <button class="btn gray" onclick="logout()">Exit</button>
+    </div>
+  </header>
+  <div id="bank"></div>
+</div>
 
-        function FallingPattern({
-            color = 'rgba(147, 51, 234, 0.4)', // Using custom soft transparent purple for matrix styling
-            backgroundColor = 'transparent', 
-            duration = 160,
-            blurIntensity = '4px',
-            density = 1,
-            className = ""
-        }) {
-            const generateBackgroundImage = () => {
-                const patterns = [
-                    `radial-gradient(4px 100px at 0px 235px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 235px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 117.5px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 252px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 252px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 126px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 150px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 150px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 75px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 253px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 253px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 126.5px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 204px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 204px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 102px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 134px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 134px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 67px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 179px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 179px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 89.5px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 299px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 299px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 149.5px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 215px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 215px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 107.5px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 281px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 281px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 140.5px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 158px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 158px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 79px, ${color} 100%, transparent 150%)`,
-                    `radial-gradient(4px 100px at 0px 210px, ${color}, transparent)`,
-                    `radial-gradient(4px 100px at 300px 210px, ${color}, transparent)`,
-                    `radial-gradient(1.5px 1.5px at 150px 105px, ${color} 100%, transparent 150%)`
-                ];
-                return patterns.join(', ');
-            };
+<!-- Question Wizard -->
+<div id="modal" class="hidden">
+  <div class="modalBox">
+    <h3 id="wizTitle">Question Wizard</h3>
+    <label>Question Type</label>
+    <select id="wType" onchange="wTypeChanged()">
+      <option value="mc">Multiple Choice</option>
+      <option value="tf">True or False</option>
+      <option value="sa">Short Answer</option>
+    </select>
+    <label>Question Prompt</label>
+    <textarea id="wQ" rows="2"></textarea>
+    <div id="wMcFields">
+      <label>Option A</label><input id="wA">
+      <label>Option B</label><input id="wB">
+      <label>Option C</label><input id="wC">
+      <label>Option D</label><input id="wD">
+      <label>Correct Answer</label>
+      <select id="wCorrect"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+    </div>
+    <div id="wTfFields" class="hidden">
+      <label>Correct Answer</label>
+      <select id="wTfCorrect"><option value="true">TRUE</option><option value="false">FALSE</option></select>
+    </div>
+    <div id="wSaFields" class="hidden">
+      <label>Accepted Answer (case-insensitive)</label>
+      <input id="wSa" placeholder="e.g. photosynthesis">
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Points</label><input id="wPts" type="number" value="100"></div>
+      <div style="flex:1"><label>Timer (sec)</label><input id="wTimer" type="number" value="30"></div>
+    </div>
+    <div class="row">
+      <button class="btn green" style="flex:1" onclick="saveQ()">Save to Question Bank</button>
+      <button class="btn gray" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
 
-            // Added missing 36th item to guarantee a proper match with startPositions & endPositions arrays
-            const backgroundSizes = [
-                '300px 235px','300px 235px','300px 235px',
-                '300px 252px','300px 252px','300px 252px',
-                '300px 150px','300px 150px','300px 150px',
-                '300px 253px','300px 253px','300px 253px',
-                '300px 204px','300px 204px','300px 204px',
-                '300px 134px','300px 134px','300px 134px',
-                '300px 179px','300px 179px','300px 179px',
-                '300px 299px','300px 299px','300px 299px',
-                '300px 215px','300px 215px','300px 215px',
-                '300px 281px','300px 281px','300px 281px',
-                '300px 158px','300px 158px','300px 158px',
-                '300px 210px','300px 210px','300px 210px'
-            ].join(', ');
+<!-- ========== PLAYER APP ========== -->
+<div id="playerApp" class="hidden">
+  <div class="panel" style="display:flex;justify-content:space-between;align-items:center">
+    <div><div class="status">Active Player</div><h3 id="pName">—</h3></div>
+    <div style="text-align:right"><div class="status">Points</div><div class="pts" id="pPts">0</div></div>
+  </div>
+  <div class="panel" style="text-align:center">
+    <div class="status" id="pStatus">⏳ Waiting for Question...</div>
+    <div class="timer" id="pTimer">--</div>
+  </div>
+  <div class="panel hidden" id="qPanel">
+    <span class="type" id="pType" style="font-size:11px;color:var(--gold)"></span>
+    <h2 id="pQ"></h2>
+    <div id="pMc" class="hidden"></div>
+    <div id="pTf" class="hidden">
+      <button class="opt" onclick="lockTf('true')">✅ TRUE</button>
+      <button class="opt" onclick="lockTf('false')">❌ FALSE</button>
+    </div>
+    <div id="pSa" class="hidden">
+      <input id="saInput" placeholder="Type your answer..." style="font-size:18px">
+      <div class="row"><button class="btn green" style="width:100%" onclick="lockSa()">Lock In Answer</button></div>
+    </div>
+    <div id="pFeedback" class="hidden">
+      <div class="correctBox" id="fbBox"></div>
+    </div>
+  </div>
+</div>
 
-            const startPositions = '0px 220px, 3px 220px, 151.5px 337.5px, 25px 24px, 28px 24px, 176.5px 150px, 50px 16px, 53px 16px, 201.5px 91px, 75px 224px, 78px 224px, 226.5px 230.5px, 100px 19px, 103px 19px, 251.5px 121px, 125px 120px, 128px 120px, 276.5px 187px, 150px 31px, 153px 31px, 301.5px 120.5px, 175px 235px, 178px 235px, 326.5px 384.5px, 200px 121px, 203px 121px, 351.5px 228.5px, 225px 224px, 228px 224px, 376.5px 364.5px, 250px 26px, 253px 26px, 401.5px 105px, 275px 75px, 278px 75px, 426.5px 180px';
-            const endPositions = '0px 6800px, 3px 6800px, 151.5px 6917.5px, 25px 13632px, 28px 13632px, 176.5px 13758px, 50px 5416px, 53px 5416px, 201.5px 5491px, 75px 17175px, 78px 17175px, 226.5px 17301.5px, 100px 5119px, 103px 5119px, 251.5px 5221px, 125px 8428px, 128px 8428px, 276.5px 8495px, 150px 9876px, 153px 9876px, 301.5px 9965.5px, 175px 13391px, 178px 13391px, 326.5px 13540.5px, 200px 14741px, 203px 14741px, 351.5px 14848.5px, 225px 18770px, 228px 18770px, 376.5px 18910.5px, 250px 5082px, 253px 5082px, 401.5px 5161px, 275px 6375px, 278px 6375px, 426.5px 6480px';
+<script>
+/* ============ SHARED STATE ============ */
+const ADMIN_PIN = "110696";
+const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("quizLive") : null;
+const store = {
+  get bank(){ return JSON.parse(localStorage.getItem("quiz_bank")||"[]"); },
+  set bank(v){ localStorage.setItem("quiz_bank", JSON.stringify(v)); },
+  get live(){ return JSON.parse(localStorage.getItem("quiz_live")||"null"); },
+  set live(v){ localStorage.setItem("quiz_live", JSON.stringify(v)); },
+  get reveal(){ return localStorage.getItem("quiz_reveal")==="1"; },
+  set reveal(v){ localStorage.setItem("quiz_reveal", v?"1":"0"); }
+};
+function emit(){ bc && bc.postMessage("sync"); }
+if(bc) bc.onmessage = ()=>{ if(role==="admin") renderBank(); else if(role==="player") renderLive(); };
 
-            return (
-                <div className={`relative h-full w-full ${className}`}>
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                        className="w-full h-full"
-                    >
-                        <motion.div
-                            className="relative w-full h-full z-0"
-                            style={{
-                                backgroundColor,
-                                backgroundImage: generateBackgroundImage(),
-                                backgroundSize: backgroundSizes,
-                            }}
-                            variants={{
-                                initial: { backgroundPosition: startPositions },
-                                animate: {
-                                    backgroundPosition: [startPositions, endPositions],
-                                    transition: {
-                                        duration: duration,
-                                        ease: 'linear',
-                                        repeat: Infinity,
-                                    },
-                                },
-                            }}
-                            initial="initial"
-                            animate="animate"
-                        />
-                    </motion.div>
-                    <div
-                        className="absolute inset-0 z-1 pointer-events-none"
-                        style={{
-                            backdropFilter: `blur(${blurIntensity})`,
-                            backgroundImage: `radial-gradient(circle at 50% 50%, transparent 0, transparent 2px, rgba(15, 23, 42, 0.1) 2px)`,
-                            backgroundSize: `${8 * density}px ${8 * density}px`,
-                        }}
-                    />
-                </div>
-            );
-        }
+/* ============ LOGIN ============ */
+let role = null;
+function pickRole(r){
+  if(r==="admin"){ document.getElementById("adminPinBox").classList.remove("hidden");
+    document.getElementById("pinInput").focus(); }
+  else { document.getElementById("playerNameBox").classList.remove("hidden");
+    document.getElementById("playerName").focus(); }
+}
+function verifyPin(){
+  if(document.getElementById("pinInput").value === ADMIN_PIN){
+    role="admin"; show("adminApp"); renderBank();
+  } else document.getElementById("pinErr").style.display="block";
+}
+function joinAsPlayer(){
+  const n = document.getElementById("playerName").value.trim();
+  if(!n) return alert("Please enter your name.");
+  sessionStorage.setItem("quiz_player", n);
+  role="player"; show("playerApp");
+  document.getElementById("pName").textContent = n;
+  renderLive();
+}
+function show(id){
+  document.getElementById("loginScreen").classList.add("hidden");
+  ["adminApp","playerApp"].forEach(a=>document.getElementById(a).classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+function logout(){ role=null; show("loginScreen"); location.reload(); }
+document.getElementById("pinInput").addEventListener("keydown",e=>{if(e.key==="Enter")verifyPin();});
+document.getElementById("playerName").addEventListener("keydown",e=>{if(e.key==="Enter")joinAsPlayer();});
 
-        // Target wrapper element and render the final layout element pipeline
-        const root = ReactDOM.createRoot(document.getElementById('falling-pattern-root'));
-        root.render(<FallingPattern />);
-    </script>
+/* ============ ADMIN ============ */
+let editingIdx = null;
+function renderBank(){
+  const bank = store.bank, el = document.getElementById("bank");
+  if(!bank.length){ el.innerHTML = `<div style="padding:40px;text-align:center;color:#9aa3d0">Your Quiz is Empty<br><br>Click <b>Add Question</b> to populate your dashboard.</div>`; return; }
+  const labels={mc:"Multiple Choice",tf:"True or False",sa:"Short Answer"};
+  el.innerHTML = bank.map((q,i)=>`
+    <div class="qcard" onclick="openWizard(${i})">
+      <span class="type">${labels[q.type]}</span>
+      <h3>${esc(q.q)}</h3>
+      <p style="color:#9aa3d0;font-size:13px">${q.pts} pts • ${q.timer}s</p>
+      ${q.sent?'<span class="badge">SENT ✓</span>':''}
+    </div>`).join("");
+}
+function openWizard(i){
+  editingIdx = (typeof i==="number") ? i : null;
+  const q = editingIdx!==null ? store.bank[i] : null;
+  document.getElementById("modal").classList.remove("hidden");
+  document.getElementById("wizTitle").textContent = q ? "Edit Question" : "Question Wizard";
+  if(q){
+    wType.value=q.type; wQ.value=q.q; wPts.value=q.pts; wTimer.value=q.timer;
+    if(q.type==="mc"){ wA.value=q.opts[0];wB.value=q.opts[1];wC.value=q.opts[2];wD.value=q.opts[3]; wCorrect.value=q.correct; }
+    if(q.type==="tf") wTfCorrect.value=q.correct;
+    if(q.type==="sa") wSa.value=q.correct;
+  } else { ["wQ","wA","wB","wC","wD","wSa"].forEach(id=>document.getElementById(id).value=""); wPts.value=100; wTimer.value=30; }
+  wTypeChanged();
+}
+function wTypeChanged(){
+  const t=wType.value;
+  document.getElementById("wMcFields").classList.toggle("hidden",t!=="mc");
+  document.getElementById("wTfFields").classList.toggle("hidden",t!=="tf");
+  document.getElementById("wSaFields").classList.toggle("hidden",t!=="sa");
+}
+function saveQ(){
+  const t=wType.value;
+  const q={type:t,q:wQ.value.trim(),pts:+wPts.value||100,timer:+wTimer.value||30,sent:false};
+  if(!q.q) return alert("Enter the question prompt.");
+  if(t==="mc"){
+    q.opts=[wA.value,wB.value,wC.value,wD.value];
+    q.correct=wCorrect.value;
+    if(q.opts.some(o=>!o.trim())) return alert("Fill all four options.");
+  } else if(t==="tf"){ q.correct=wTfCorrect.value; q.opts=["TRUE","FALSE"]; }
+  else { q.correct=wSa.value.trim().toLowerCase(); if(!q.correct) return alert("Enter accepted answer."); }
+  const bank=store.bank;
+  if(editingIdx!==null) bank[editingIdx]=q; else bank.push(q);
+  store.bank=bank; closeModal(); renderBank();
+}
+function closeModal(){ document.getElementById("modal").classList.add("hidden"); editingIdx=null; }
+function pushQ(i){
+  const bank=store.bank; bank[i].sent=true; store.bank=bank; store.reveal=false;
+  store.live={...bank[i], startedAt:Date.now(), pushed:true}; emit(); renderBank();
+}
+function revealAnswer(){
+  store.reveal=true; emit();
+  const bank=store.bank;
+  store.live && (store.live.reveal=true);
+  emit();
+}
+function deleteQ(i){ if(confirm("Delete this question?")){ const b=store.bank; b.splice(i,1); store.bank=b; renderBank(); } }
+function wipeAll(){ if(confirm("Erase grid & ALL storage memory?")){ store.bank=[]; store.live=null; store.reveal=false; emit(); renderBank(); } }
+function toggleFS(){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwK2LR8MlREunfGh3bSC0wPZ2oD7N9_YNN0M941hi5rsCwOmNl7TXmNyklwNN3qNRKQ/exec";
-        let teamName = "", currentCorrectAns = "", currentPoints = 0, hasSubmitted = false;
-        let timeLeft = 25; 
-        let timerInterval = null;
-        let activeQuestionId = "";
+/* admin: right-click a card for quick actions */
+document.getElementById("bank").addEventListener("contextmenu",e=>{
+  const card=e.target.closest(".qcard"); if(!card) return;
+  e.preventDefault(); const i=[...card.parentNode.children].indexOf(card);
+  const m=confirm("OK = Push to players live\nCancel = Delete question");
+  m ? pushQ(i) : deleteQ(i);
+});
+/* header quick-reveal button injected for convenience */
+window.addEventListener("load",()=>{
+  const h=document.querySelector("#adminApp header div:last-child");
+  const b=document.createElement("button"); b.className="btn green"; b.textContent="👁 Reveal";
+  b.onclick=revealAnswer; h.prepend(b);
+});
 
-        async function joinGame() {
-            const input = document.getElementById('team-name');
-            const btn = document.getElementById('join-btn');
-            teamName = input.value.trim().toUpperCase();
-            if(!teamName) return alert("Please enter a valid handle name description.");
-
-            btn.innerText = "REGISTERING...";
-            btn.disabled = true;
-
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors", 
-                    body: JSON.stringify({ action: "registerPlayer", user: teamName })
-                });
-                document.getElementById('display-team').innerText = teamName;
-                document.getElementById('setup-ui').classList.add('hidden');
-                document.getElementById('game-ui').classList.remove('hidden');
-                setInterval(syncPlayer, 1500);
-            } catch (e) { alert("Error connecting to real-time service host node."); }
-        }
-
-        async function syncPlayer() {
-            try {
-                const res = await fetch(`${SCRIPT_URL}?cb=${Date.now()}`);
-                const data = await res.json();
-                
-                if (data.status === "ACTIVE") {
-                    document.getElementById('waiting-state').classList.add('hidden');
-                    document.getElementById('answer-state').classList.remove('hidden');
-                    document.getElementById('timer-box').classList.remove('hidden');
-                    
-                    if (activeQuestionId !== data.question) {
-                        activeQuestionId = data.question;
-                        resetForNewQuestion(data);
-                    }
-                    
-                    document.getElementById('current-q').innerText = data.question;
-                    document.getElementById('pts-badge').innerText = data.points + " POINTS";
-                    
-                    if(data.opts) {
-                        document.getElementById('text-optA').innerText = data.opts.A || "...";
-                        document.getElementById('text-optB').innerText = data.opts.B || "...";
-                        document.getElementById('text-optC').innerText = data.opts.C || "...";
-                        document.getElementById('text-optD').innerText = data.opts.D || "...";
-                    }
-
-                    currentCorrectAns = data.answer.toUpperCase();
-                    currentPoints = data.points;
-
-                    if (data.reveal === true || data.reveal === "true" || data.revealAnswer === true) {
-                        document.getElementById('reveal-box').classList.remove('hidden');
-                        document.getElementById('reveal-answer').innerText = `${currentCorrectAns}: ${data.opts ? data.opts[currentCorrectAns] : ''}`;
-                        document.getElementById('sub-status').innerText = "Host has revealed the official result details!";
-                    }
-                } else {
-                    document.getElementById('waiting-state').classList.remove('hidden');
-                    document.getElementById('answer-state').classList.add('hidden');
-                    document.getElementById('timer-box').classList.add('hidden');
-                    activeQuestionId = "";
-                    clearInterval(timerInterval);
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function resetForNewQuestion(data) {
-            hasSubmitted = false;
-            timeLeft = data.time || data.t || 25; 
-            
-            document.getElementById('input-container').classList.remove('hidden');
-            document.getElementById('blind-feedback').classList.add('hidden');
-            document.getElementById('reveal-box').classList.add('hidden');
-            document.getElementById('sub-status').innerText = "Waiting for host to reveal answer...";
-            document.getElementById('timer-seconds').innerText = timeLeft + "s";
-            document.getElementById('timer-seconds').classList.remove('timer-low');
-
-            ['A', 'B', 'C', 'D'].forEach(opt => {
-                const el = document.getElementById(`btn-opt${opt}`);
-                el.disabled = false;
-                el.className = "bg-white/5 hover:bg-purple-600/30 border border-white/10 p-5 rounded-2xl text-left font-semibold text-lg transition-all active:scale-95 flex items-center gap-3 w-full";
-            });
-
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer-seconds').innerText = timeLeft + "s";
-                if(timeLeft <= 5) document.getElementById('timer-seconds').classList.add('timer-low');
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    if (!hasSubmitted) timeoutAutoSubmit();
-                }
-            }, 1000);
-        }
-
-        async function selectOption(pickedLetter) {
-            if(hasSubmitted) return;
-            hasSubmitted = true;
-            clearInterval(timerInterval);
-
-            ['A', 'B', 'C', 'D'].forEach(opt => {
-                const el = document.getElementById(`btn-opt${opt}`);
-                el.disabled = true;
-                if(opt === pickedLetter) {
-                    el.classList.add('bg-purple-600/80', 'border-purple-400');
-                } else {
-                    el.classList.add('opacity-40');
-                }
-            });
-
-            document.getElementById('input-container').classList.add('hidden');
-            document.getElementById('blind-feedback').classList.remove('hidden');
-            document.getElementById('status-text').innerText = `Choice locked in: Option ${pickedLetter}`;
-
-            if(pickedLetter === currentCorrectAns) {
-                await fetch(SCRIPT_URL, {
-                    method: "POST", 
-                    mode: "no-cors",
-                    body: JSON.stringify({ 
-                        action: "submitScore", 
-                        user: teamName, 
-                        points: currentPoints 
-                    })
-                });
-            }
-        }
-
-        function timeoutAutoSubmit() {
-            hasSubmitted = true;
-            ['A', 'B', 'C', 'D'].forEach(opt => {
-                document.getElementById(`btn-opt${opt}`).disabled = true;
-                document.getElementById(`btn-opt${opt}`).classList.add('opacity-40');
-            });
-            document.getElementById('input-container').classList.add('hidden');
-            document.getElementById('blind-feedback').classList.remove('hidden');
-            document.getElementById('status-text').innerText = "TIME RAN OUT (No Choice Sent)";
-        }
-    </script>
+/* ============ PLAYER ============ */
+let myLocked=false, currentLive=null;
+function renderLive(){
+  const live=store.live; currentLive=live;
+  if(!live){ document.getElementById("qPanel").classList.add("hidden");
+    document.getElementById("pStatus").textContent="⏳ Waiting for Question..."; return; }
+  document.getElementById("qPanel").classList.remove("hidden");
+  document.getElementById("pStatus").textContent = store.reveal ? "✔ Answer Revealed" : "📝 Question Live — Answer Now!";
+  document.getElementById("pType").textContent = {mc:"Multiple Choice",tf:"True or False",sa:"Short Answer"}[live.type];
+  document.getElementById("pQ").textContent = live.q;
+  myLocked = myLocked || store.reveal;
+  // MC options
+  if(live.type==="mc"){
+    const box=document.getElementById("pMc"); box.classList.remove("hidden");
+    document.getElementById("pTf").classList.add("hidden");
+    document.getElementById("pSa").classList.add("hidden");
+    box.innerHTML = live.opts.map((o,i)=>
+      `<button class="opt" data-k="${"ABCD"[i]}" onclick="lockMc(this)" ${myLocked?"disabled":""}>
+        <b>${"ABCD"[i]}.</b> ${esc(o)}</button>`).join("");
+  } else if(live.type==="tf"){
+    document.getElementById("pMc").classList.add("hidden");
+    document.getElementById("pTf").classList.remove("hidden");
+    document.getElementById("pSa").classList.add("hidden");
+    document.querySelectorAll("#pTf .opt").forEach(b=>b.disabled=myLocked);
+  } else {
+    document.getElementById("pMc").classList.add("hidden");
+    document.getElementById("pTf").classList.add("hidden");
+    document.getElementById("pSa").classList.remove("hidden");
+    document.getElementById("saInput").disabled=myLocked;
+  }
+  if(store.reveal) showFeedback(null);
+}
+function lockMc(btn){
+  if(myLocked||store.reveal) return;
+  myLocked=true; btn.classList.add("sel");
+  document.querySelectorAll("#pMc .opt").forEach(b=>b.disabled=true);
+  setStatus("🔒 Choice Locked In — waiting for host...");
+}
+function lockTf(v){
+  if(myLocked||store.reveal) return;
+  myLocked=true;
+  document.querySelectorAll("#pTf .opt").forEach(b=>{b.disabled=true; if(b.textContent.includes(v==="true"?"TRUE":"FALSE")) b.classList.add("sel");});
+  setStatus("🔒 Choice Locked In — waiting for host...");
+}
+function lockSa(){
+  if(myLocked||store.reveal) return;
+  const v=document.getElementById("saInput").value.trim();
+  if(!v) return alert("Type an answer first.");
+  myLocked=true; document.getElementById("saInput").disabled=true;
+  sessionStorage.setItem("quiz_sa", v.toLowerCase());
+  setStatus("🔒 Answer Locked In — waiting for host...");
+}
+function setStatus(s){ document.getElementById("pStatus").textContent=s; }
+function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+function showFeedback(myAns){
+  const live=store.live; if(!live) return;
+  const fb=document.getElementById("pFeedback"), box=document.getElementById("fbBox");
+  fb.classList.remove("hidden");
+  let correctTxt, myCorrect=false;
+  if(live.type==="mc"){
+    correctTxt=`Correct Answer: ${live.correct}. ${esc(live.opts["ABCD".indexOf(live.correct)])}`;
+    document.querySelectorAll("#pMc .opt").forEach(b=>{
+      b.disabled=true;
+      if(b.dataset.k===live.correct) b.classList.add("correct");
+      else if(b.classList.contains("sel")) b.classList.add("wrong");
+    });
+    const sel=document.querySelector("#pMc .opt.sel");
+    myCorrect = sel && sel.dataset.k===live.correct;
+  } else if(live.type==="tf"){
+    correctTxt=`Correct Answer: ${live.correct.toUpperCase()}`;
+    document.querySelectorAll("#pTf .opt").forEach(b=>{
+      b.disabled=true;
+      if(b.textContent.includes(live.correct==="true"?"TRUE":"FALSE")) b.classList.add("correct");
+    });
+  } else {
+    correctTxt=`Correct Answer: ${esc(live.correct)}`;
+    const mine=sessionStorage.getItem("quiz_sa");
+    myCorrect = mine===live.correct;
+  }
+  if(myAns!==null) myCorrect=myAns;
+  box.innerHTML = `<h3>${myCorrect?"✅ Correct!":"❌ Not quite"}</h3><p>${correctTxt}</p>`;
+  if(myCorrect){
+    const pts=+document.getElementById("pPts").textContent.split(" ")[0]||0;
+    document.getElementById("pPts").textContent = (+pts + live.pts);
+  }
+  setStatus(myCorrect?"✔ Verified Correct — well done!":"✔ Verified solution revealed");
+}
+/* timer tick shared */
+setInterval(()=>{
+  const live=store.live;
+  const tEl=document.getElementById("pTimer");
+  if(!live){ if(role==="player") tEl.textContent="--"; return; }
+  const left=Math.max(0, live.timer - Math.floor((Date.now()-live.startedAt)/1000));
+  if(role==="player") tEl.textContent = left+"s";
+  if(left===0 && role==="player") document.querySelectorAll(".opt,#saInput,.btn").forEach(e=>e.disabled=true);
+},500);
+window.addEventListener("storage",e=>{
+  if(e.key==="quiz_live"||e.key==="quiz_reveal"){
+    if(role==="admin") renderBank();
+    if(role==="player" && e.key==="quiz_reveal" && e.newValue==="1"){ myLocked=true; showFeedback(null); }
+    else if(role==="player" && e.key==="quiz_live"){ myLocked=false; sessionStorage.removeItem("quiz_sa"); renderLive(); }
+  }
+});
+</script>
 </body>
 </html>
