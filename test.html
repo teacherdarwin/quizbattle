@@ -3,90 +3,96 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz Live — All-in-One Console</title>
+<title>Briefcase Control — Quiz Live</title>
 <style>
-  :root{--bg:#0f1226;--card:#1a1f3d;--accent:#4f7cff;--green:#2ecc71;--red:#e74c3c;--gold:#f1c40f;--text:#eef1ff}
-  *{box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
-  body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:#1e2235;color:#eee;min-height:100vh}
   .hidden{display:none!important}
-  .btn{background:var(--accent);color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:15px;cursor:pointer;font-weight:600}
-  .btn:hover{filter:brightness(1.15)}
-  .btn.gray{background:#3a4166}.btn.danger{background:var(--red)}.btn.green{background:var(--green)}
-  input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #3a4166;background:#12163a;color:var(--text);font-size:15px}
-  label{display:block;margin:10px 0 4px;font-size:13px;color:#9aa3d0}
+  h1,h2,h3{margin:0 0 10px}
+  .btn{background:#ff9d3b;color:#1e2235;border:none;padding:10px 18px;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.gray{background:#4a5175;color:#eee}
+  .btn.danger{background:#d64545;color:#fff}
+  .btn.green{background:#3fae6a;color:#fff}
+  input,select,textarea{width:100%;padding:8px;border-radius:5px;border:1px solid #4a5175;background:#141728;color:#eee;font-size:14px;box-sizing:border-box}
+  label{display:block;margin:8px 0 3px;font-size:12px;color:#9aa0c0;font-weight:bold}
+  .status{font-size:12px;color:#3fae6a;font-weight:bold}
 
-  /* ROLE LOGIN */
-  #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:18px}
-  #loginScreen h1{margin:0;font-size:34px}
-  .roleCards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
-  .roleCard{background:var(--card);padding:30px 26px;border-radius:16px;width:260px;text-align:center;cursor:pointer;border:2px solid transparent;transition:.2s}
-  .roleCard:hover{border-color:var(--accent);transform:translateY(-4px)}
-  .roleCard .ico{font-size:44px}
+  /* ----- ROLE LOGIN (added feature, styled to match) ----- */
+  #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px}
+  #loginScreen h1{font-size:30px}
+  #loginScreen p{color:#9aa0c0}
+  #adminPinBox,#playerNameBox{background:#262b45;padding:22px;border-radius:10px;width:320px}
+  .roleBtns{display:flex;gap:14px}
+  .roleBtns button{width:180px;padding:18px;font-size:16px}
 
-  /* ADMIN */
-  #adminApp header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:#141938}
-  #bank{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:20px 24px}
-  .qcard{background:var(--card);border-radius:12px;padding:16px;border-left:4px solid var(--accent);cursor:pointer;position:relative}
-  .qcard .type{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1px}
-  .badge{position:absolute;top:10px;right:10px;font-size:11px;background:var(--green);padding:3px 9px;border-radius:20px}
+  /* ----- ADMIN ----- */
+  #adminApp header{background:#262b45;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  #adminApp header .btns{display:flex;gap:8px;flex-wrap:wrap}
+  #bank{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:18px}
+  .qcard{background:#262b45;border-radius:8px;padding:14px;border-left:4px solid #ff9d3b;cursor:pointer;position:relative}
+  .qcard .type{font-size:11px;color:#ff9d3b;font-weight:bold;text-transform:uppercase}
+  .qcard p{margin:6px 0 0;color:#9aa0c0;font-size:13px}
+  .badge{position:absolute;top:10px;right:10px;font-size:11px;color:#3fae6a;font-weight:bold}
   #modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50}
-  .modalBox{background:var(--card);padding:28px;border-radius:16px;width:min(480px,92vw);max-height:90vh;overflow:auto}
-  .row{display:flex;gap:10px;margin-top:18px}
+  .modalBox{background:#262b45;padding:22px;border-radius:10px;width:420px;max-width:92vw;max-height:90vh;overflow:auto}
+  .row{display:flex;gap:10px;margin-top:16px}
 
-  /* PLAYER */
-  #playerApp{max-width:640px;margin:0 auto;padding:24px}
-  .panel{background:var(--card);border-radius:16px;padding:24px;margin-bottom:18px}
-  .timer{font-size:36px;font-weight:800;color:var(--gold)}
-  .opt{display:block;width:100%;text-align:left;background:#12163a;border:2px solid #3a4166;color:var(--text);padding:16px;border-radius:12px;margin-bottom:10px;font-size:16px;cursor:pointer;transition:.15s}
-  .opt:hover{border-color:var(--accent)}
-  .opt.sel{border-color:var(--gold)}
-  .opt.correct{border-color:var(--green);background:rgba(46,204,113,.15)}
-  .opt.wrong{border-color:var(--red);background:rgba(231,76,60,.15)}
+  /* ----- PLAYER ----- */
+  #playerApp{max-width:640px;margin:0 auto;padding:20px}
+  .panel{background:#262b45;border-radius:10px;padding:18px;margin-bottom:14px}
+  .topbar{display:flex;justify-content:space-between;align-items:center}
+  .timerBox{text-align:center;font-size:34px;font-weight:bold;color:#ff9d3b}
+  .opt{display:block;width:100%;text-align:left;background:#141728;border:1px solid #4a5175;color:#eee;padding:12px;border-radius:6px;margin-bottom:8px;font-size:15px;cursor:pointer}
+  .opt:hover{border-color:#ff9d3b}
+  .opt.sel{border-color:#ff9d3b;background:#2a2418}
+  .opt.correct{border-color:#3fae6a;background:#1a2e22}
+  .opt.wrong{border-color:#d64545;background:#2e1a1a}
   .opt:disabled{cursor:not-allowed}
-  .correctBox{border:2px solid var(--green);border-radius:12px;padding:18px;margin-top:14px;background:rgba(46,204,113,.1)}
-  .pts{font-size:22px;font-weight:700;color:var(--gold)}
-  .status{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#9aa3d0}
-  h2,h3{margin:0 0 12px}
+  #pTf{display:flex;gap:10px}
+  #pTf .opt{text-align:center;font-weight:bold;margin:0}
+  .correctBox{border:1px solid #3fae6a;border-radius:8px;padding:14px;margin-top:12px;background:#1a2e22}
+  .pts{font-size:20px;font-weight:bold;color:#ff9d3b}
 </style>
 </head>
 <body>
 
-<!-- ========== ROLE LOGIN ========== -->
+<!-- ========== ROLE SELECTION ========== -->
 <div id="loginScreen">
-  <h1>🎮 Quiz Live</h1>
-  <p style="color:#9aa3d0">Choose your role to continue</p>
-  <div class="roleCards">
-    <div class="roleCard" onclick="pickRole('admin')">
-      <div class="ico">💼</div><h3>Host / Admin</h3><p style="color:#9aa3d0">Control the live session</p>
-    </div>
-    <div class="roleCard" onclick="pickRole('player')">
-      <div class="ico">🙋</div><h3>Player</h3><p style="color:#9aa3d0">Join and answer questions</p>
-    </div>
+  <h1>Briefcase Control</h1>
+  <p>Select your role to continue.</p>
+  <div class="roleBtns">
+    <button class="btn" onclick="pickRole('admin')">💼 Host / Admin</button>
+    <button class="btn green" onclick="pickRole('player')">🙋 Player</button>
   </div>
-  <div id="adminPinBox" class="hidden modalBox" style="text-align:center">
-    <h3>🔐 Admin Access</h3>
-    <p style="color:#9aa3d0">Enter the administrator code</p>
-    <input type="password" id="pinInput" placeholder="Admin code" style="text-align:center;font-size:20px;letter-spacing:6px">
-    <div class="row"><button class="btn" style="width:100%" onclick="verifyPin()">Unlock Console</button></div>
-    <p id="pinErr" style="color:var(--red);display:none">Incorrect code. Try again.</p>
+
+  <div id="adminPinBox" class="hidden">
+    <h3>Admin Sign-In</h3>
+    <p style="margin:0 0 8px">Enter the administrator code.</p>
+    <input type="password" id="pinInput" placeholder="Admin code" style="text-align:center">
+    <div class="row"><button class="btn" style="width:100%" onclick="verifyPin()">Sign In</button></div>
+    <p id="pinErr" style="color:#d64545;display:none">Incorrect code. Try again.</p>
   </div>
-  <div id="playerNameBox" class="hidden modalBox" style="text-align:center">
-    <h3>🙋 Join the Quiz</h3>
-    <p style="color:#9aa3d0">Enter your name to register for the live session</p>
+
+  <div id="playerNameBox" class="hidden">
+    <h3>Join the Quiz</h3>
+    <p style="margin:0 0 8px">Enter your name to register for the live session.</p>
     <input id="playerName" placeholder="Your name">
     <div class="row"><button class="btn green" style="width:100%" onclick="joinAsPlayer()">Connect to Live</button></div>
   </div>
 </div>
 
-<!-- ========== ADMIN APP ========== -->
+<!-- ========== ADMIN ========== -->
 <div id="adminApp" class="hidden">
   <header>
-    <div><h2 style="margin:0">💼 Briefcase Control</h2><span class="status" id="sysStatus">● SYSTEM LIVE</span></div>
-    <div style="display:flex;gap:10px">
+    <div>
+      <h2>Briefcase Control</h2>
+      <span class="status">● SYSTEM LIVE</span>
+    </div>
+    <div class="btns">
       <button class="btn" onclick="openWizard()">➕ Add Question</button>
-      <button class="btn danger" onclick="wipeAll()">Wipe All</button>
-      <button class="btn gray" onclick="toggleFS()">⛶</button>
-      <button class="btn gray" onclick="logout()">Exit</button>
+      <button class="btn green" onclick="revealAnswer()">👁 Reveal Answer</button>
+      <button class="btn danger" onclick="wipeAll()">Wipe Grid &amp; All Storage Memory</button>
+      <button class="btn gray" onclick="toggleFS()">⛶ Fullscreen</button>
     </div>
   </header>
   <div id="bank"></div>
@@ -122,46 +128,47 @@
     </div>
     <div class="row">
       <div style="flex:1"><label>Points</label><input id="wPts" type="number" value="100"></div>
-      <div style="flex:1"><label>Timer (sec)</label><input id="wTimer" type="number" value="30"></div>
+      <div style="flex:1"><label>Timer (Sec)</label><input id="wTimer" type="number" value="30"></div>
     </div>
     <div class="row">
       <button class="btn green" style="flex:1" onclick="saveQ()">Save to Question Bank</button>
-      <button class="btn gray" onclick="closeModal()">Cancel</button>
+      <button class="btn gray" onclick="closeModal()">Cancel &amp; Close</button>
     </div>
   </div>
 </div>
 
-<!-- ========== PLAYER APP ========== -->
+<!-- ========== PLAYER ========== -->
 <div id="playerApp" class="hidden">
-  <div class="panel" style="display:flex;justify-content:space-between;align-items:center">
-    <div><div class="status">Active Player</div><h3 id="pName">—</h3></div>
-    <div style="text-align:right"><div class="status">Points</div><div class="pts" id="pPts">0</div></div>
+  <div class="panel topbar">
+    <div><span class="status" style="color:#9aa0c0">ACTIVE TEAM</span><h3 id="pName">—</h3></div>
+    <div style="text-align:right"><span class="status" style="color:#9aa0c0">POINTS</span><div class="pts" id="pPts">0</div></div>
   </div>
   <div class="panel" style="text-align:center">
-    <div class="status" id="pStatus">⏳ Waiting for Question...</div>
-    <div class="timer" id="pTimer">--</div>
+    <div class="status" style="color:#9aa0c0" id="pStatus">⏳ WAITING FOR QUESTION...</div>
+    <div class="timerBox" id="pTimer">--</div>
   </div>
   <div class="panel hidden" id="qPanel">
-    <span class="type" id="pType" style="font-size:11px;color:var(--gold)"></span>
-    <h2 id="pQ"></h2>
+    <span class="status" style="color:#ff9d3b" id="pType"></span>
+    <h3 id="pQ"></h3>
+    <!-- Multiple Choice -->
     <div id="pMc" class="hidden"></div>
+    <!-- True or False -->
     <div id="pTf" class="hidden">
-      <button class="opt" onclick="lockTf('true')">✅ TRUE</button>
-      <button class="opt" onclick="lockTf('false')">❌ FALSE</button>
+      <button class="opt" onclick="lockTf('true')">TRUE</button>
+      <button class="opt" onclick="lockTf('false')">FALSE</button>
     </div>
+    <!-- Short Answer -->
     <div id="pSa" class="hidden">
-      <input id="saInput" placeholder="Type your answer..." style="font-size:18px">
+      <input id="saInput" placeholder="Type your answer...">
       <div class="row"><button class="btn green" style="width:100%" onclick="lockSa()">Lock In Answer</button></div>
     </div>
-    <div id="pFeedback" class="hidden">
-      <div class="correctBox" id="fbBox"></div>
-    </div>
+    <div id="pFeedback" class="hidden"><div class="correctBox" id="fbBox"></div></div>
   </div>
 </div>
 
 <script>
 /* ============ SHARED STATE ============ */
-const ADMIN_PIN = "110696";
+const ADMIN_PIN = "110696"; // built-in admin code
 const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("quizLive") : null;
 const store = {
   get bank(){ return JSON.parse(localStorage.getItem("quiz_bank")||"[]"); },
@@ -174,18 +181,15 @@ const store = {
 function emit(){ bc && bc.postMessage("sync"); }
 if(bc) bc.onmessage = ()=>{ if(role==="admin") renderBank(); else if(role==="player") renderLive(); };
 
-/* ============ LOGIN ============ */
+/* ============ ROLE LOGIN ============ */
 let role = null;
 function pickRole(r){
-  if(r==="admin"){ document.getElementById("adminPinBox").classList.remove("hidden");
-    document.getElementById("pinInput").focus(); }
-  else { document.getElementById("playerNameBox").classList.remove("hidden");
-    document.getElementById("playerName").focus(); }
+  if(r==="admin"){ document.getElementById("adminPinBox").classList.remove("hidden"); document.getElementById("pinInput").focus(); }
+  else { document.getElementById("playerNameBox").classList.remove("hidden"); document.getElementById("playerName").focus(); }
 }
 function verifyPin(){
-  if(document.getElementById("pinInput").value === ADMIN_PIN){
-    role="admin"; show("adminApp"); renderBank();
-  } else document.getElementById("pinErr").style.display="block";
+  if(document.getElementById("pinInput").value === ADMIN_PIN){ role="admin"; show("adminApp"); renderBank(); }
+  else document.getElementById("pinErr").style.display="block";
 }
 function joinAsPlayer(){
   const n = document.getElementById("playerName").value.trim();
@@ -200,21 +204,20 @@ function show(id){
   ["adminApp","playerApp"].forEach(a=>document.getElementById(a).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
-function logout(){ role=null; show("loginScreen"); location.reload(); }
 document.getElementById("pinInput").addEventListener("keydown",e=>{if(e.key==="Enter")verifyPin();});
 document.getElementById("playerName").addEventListener("keydown",e=>{if(e.key==="Enter")joinAsPlayer();});
 
 /* ============ ADMIN ============ */
 let editingIdx = null;
+const TYPE_LABEL={mc:"Multiple Choice",tf:"True or False",sa:"Short Answer"};
 function renderBank(){
   const bank = store.bank, el = document.getElementById("bank");
-  if(!bank.length){ el.innerHTML = `<div style="padding:40px;text-align:center;color:#9aa3d0">Your Quiz is Empty<br><br>Click <b>Add Question</b> to populate your dashboard.</div>`; return; }
-  const labels={mc:"Multiple Choice",tf:"True or False",sa:"Short Answer"};
+  if(!bank.length){ el.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#9aa0c0;padding:40px"><h3>Your Quiz is Empty</h3>Click the <b>Add Question</b> button at the top to populate your dashboard.<br><br><i>Tip: right-click a saved question to Push Live (OK) or Delete (Cancel).</i></div>`; return; }
   el.innerHTML = bank.map((q,i)=>`
     <div class="qcard" onclick="openWizard(${i})">
-      <span class="type">${labels[q.type]}</span>
+      <span class="type">${TYPE_LABEL[q.type]}</span>
       <h3>${esc(q.q)}</h3>
-      <p style="color:#9aa3d0;font-size:13px">${q.pts} pts • ${q.timer}s</p>
+      <p>${q.pts} pts • ${q.timer}s</p>
       ${q.sent?'<span class="badge">SENT ✓</span>':''}
     </div>`).join("");
 }
@@ -242,8 +245,7 @@ function saveQ(){
   const q={type:t,q:wQ.value.trim(),pts:+wPts.value||100,timer:+wTimer.value||30,sent:false};
   if(!q.q) return alert("Enter the question prompt.");
   if(t==="mc"){
-    q.opts=[wA.value,wB.value,wC.value,wD.value];
-    q.correct=wCorrect.value;
+    q.opts=[wA.value,wB.value,wC.value,wD.value]; q.correct=wCorrect.value;
     if(q.opts.some(o=>!o.trim())) return alert("Fill all four options.");
   } else if(t==="tf"){ q.correct=wTfCorrect.value; q.opts=["TRUE","FALSE"]; }
   else { q.correct=wSa.value.trim().toLowerCase(); if(!q.correct) return alert("Enter accepted answer."); }
@@ -254,51 +256,38 @@ function saveQ(){
 function closeModal(){ document.getElementById("modal").classList.add("hidden"); editingIdx=null; }
 function pushQ(i){
   const bank=store.bank; bank[i].sent=true; store.bank=bank; store.reveal=false;
-  store.live={...bank[i], startedAt:Date.now(), pushed:true}; emit(); renderBank();
+  store.live={...bank[i], startedAt:Date.now()}; emit(); renderBank();
 }
-function revealAnswer(){
-  store.reveal=true; emit();
-  const bank=store.bank;
-  store.live && (store.live.reveal=true);
-  emit();
-}
+function revealAnswer(){ store.reveal=true; emit(); }
 function deleteQ(i){ if(confirm("Delete this question?")){ const b=store.bank; b.splice(i,1); store.bank=b; renderBank(); } }
-function wipeAll(){ if(confirm("Erase grid & ALL storage memory?")){ store.bank=[]; store.live=null; store.reveal=false; emit(); renderBank(); } }
+function wipeAll(){ if(confirm("Wipe grid & ALL storage memory?")){ store.bank=[]; store.live=null; store.reveal=false; emit(); renderBank(); } }
 function toggleFS(){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
 
-/* admin: right-click a card for quick actions */
+/* right-click card: push live or delete (replaces old push/reveal/delete buttons) */
 document.getElementById("bank").addEventListener("contextmenu",e=>{
   const card=e.target.closest(".qcard"); if(!card) return;
   e.preventDefault(); const i=[...card.parentNode.children].indexOf(card);
-  const m=confirm("OK = Push to players live\nCancel = Delete question");
-  m ? pushQ(i) : deleteQ(i);
-});
-/* header quick-reveal button injected for convenience */
-window.addEventListener("load",()=>{
-  const h=document.querySelector("#adminApp header div:last-child");
-  const b=document.createElement("button"); b.className="btn green"; b.textContent="👁 Reveal";
-  b.onclick=revealAnswer; h.prepend(b);
+  confirm("OK = Push LIVE to players\nCancel = Delete question") ? pushQ(i) : deleteQ(i);
 });
 
 /* ============ PLAYER ============ */
-let myLocked=false, currentLive=null;
+let myLocked=false;
 function renderLive(){
-  const live=store.live; currentLive=live;
+  const live=store.live;
   if(!live){ document.getElementById("qPanel").classList.add("hidden");
-    document.getElementById("pStatus").textContent="⏳ Waiting for Question..."; return; }
+    document.getElementById("pStatus").textContent="⏳ WAITING FOR QUESTION..."; return; }
   document.getElementById("qPanel").classList.remove("hidden");
-  document.getElementById("pStatus").textContent = store.reveal ? "✔ Answer Revealed" : "📝 Question Live — Answer Now!";
-  document.getElementById("pType").textContent = {mc:"Multiple Choice",tf:"True or False",sa:"Short Answer"}[live.type];
+  document.getElementById("pStatus").textContent = store.reveal ? "✔ VERIFIED SOLUTION REVEALED" : "📝 QUESTION LIVE — ANSWER NOW!";
+  document.getElementById("pType").textContent = TYPE_LABEL[live.type].toUpperCase();
   document.getElementById("pQ").textContent = live.q;
   myLocked = myLocked || store.reveal;
-  // MC options
+  /* --- adaptive interface per question type --- */
   if(live.type==="mc"){
     const box=document.getElementById("pMc"); box.classList.remove("hidden");
     document.getElementById("pTf").classList.add("hidden");
     document.getElementById("pSa").classList.add("hidden");
     box.innerHTML = live.opts.map((o,i)=>
-      `<button class="opt" data-k="${"ABCD"[i]}" onclick="lockMc(this)" ${myLocked?"disabled":""}>
-        <b>${"ABCD"[i]}.</b> ${esc(o)}</button>`).join("");
+      `<button class="opt" data-k="${"ABCD"[i]}" onclick="lockMc(this)" ${myLocked?"disabled":""}><b>${"ABCD"[i]}.</b> ${esc(o)}</button>`).join("");
   } else if(live.type==="tf"){
     document.getElementById("pMc").classList.add("hidden");
     document.getElementById("pTf").classList.remove("hidden");
@@ -310,19 +299,19 @@ function renderLive(){
     document.getElementById("pSa").classList.remove("hidden");
     document.getElementById("saInput").disabled=myLocked;
   }
-  if(store.reveal) showFeedback(null);
+  if(store.reveal) showFeedback();
 }
 function lockMc(btn){
   if(myLocked||store.reveal) return;
   myLocked=true; btn.classList.add("sel");
   document.querySelectorAll("#pMc .opt").forEach(b=>b.disabled=true);
-  setStatus("🔒 Choice Locked In — waiting for host...");
+  setStatus("🔒 CHOICE LOCKED IN — waiting for host to reveal verified solution...");
 }
 function lockTf(v){
   if(myLocked||store.reveal) return;
   myLocked=true;
-  document.querySelectorAll("#pTf .opt").forEach(b=>{b.disabled=true; if(b.textContent.includes(v==="true"?"TRUE":"FALSE")) b.classList.add("sel");});
-  setStatus("🔒 Choice Locked In — waiting for host...");
+  document.querySelectorAll("#pTf .opt").forEach(b=>{b.disabled=true; if(b.textContent===v.toUpperCase()) b.classList.add("sel");});
+  setStatus("🔒 CHOICE LOCKED IN — waiting for host to reveal verified solution...");
 }
 function lockSa(){
   if(myLocked||store.reveal) return;
@@ -330,17 +319,17 @@ function lockSa(){
   if(!v) return alert("Type an answer first.");
   myLocked=true; document.getElementById("saInput").disabled=true;
   sessionStorage.setItem("quiz_sa", v.toLowerCase());
-  setStatus("🔒 Answer Locked In — waiting for host...");
+  setStatus("🔒 ANSWER LOCKED IN — waiting for host to reveal verified solution...");
 }
 function setStatus(s){ document.getElementById("pStatus").textContent=s; }
 function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
-function showFeedback(myAns){
+function showFeedback(){
   const live=store.live; if(!live) return;
   const fb=document.getElementById("pFeedback"), box=document.getElementById("fbBox");
   fb.classList.remove("hidden");
   let correctTxt, myCorrect=false;
   if(live.type==="mc"){
-    correctTxt=`Correct Answer: ${live.correct}. ${esc(live.opts["ABCD".indexOf(live.correct)])}`;
+    correctTxt=`Correct Answer: <b>${live.correct}. ${esc(live.opts["ABCD".indexOf(live.correct)])}</b>`;
     document.querySelectorAll("#pMc .opt").forEach(b=>{
       b.disabled=true;
       if(b.dataset.k===live.correct) b.classList.add("correct");
@@ -349,38 +338,34 @@ function showFeedback(myAns){
     const sel=document.querySelector("#pMc .opt.sel");
     myCorrect = sel && sel.dataset.k===live.correct;
   } else if(live.type==="tf"){
-    correctTxt=`Correct Answer: ${live.correct.toUpperCase()}`;
+    correctTxt=`Correct Answer: <b>${live.correct.toUpperCase()}</b>`;
     document.querySelectorAll("#pTf .opt").forEach(b=>{
       b.disabled=true;
-      if(b.textContent.includes(live.correct==="true"?"TRUE":"FALSE")) b.classList.add("correct");
+      if(b.textContent===live.correct.toUpperCase()) b.classList.add("correct");
     });
   } else {
-    correctTxt=`Correct Answer: ${esc(live.correct)}`;
-    const mine=sessionStorage.getItem("quiz_sa");
-    myCorrect = mine===live.correct;
+    correctTxt=`Correct Answer: <b>${esc(live.correct)}</b>`;
+    myCorrect = sessionStorage.getItem("quiz_sa")===live.correct;
   }
-  if(myAns!==null) myCorrect=myAns;
-  box.innerHTML = `<h3>${myCorrect?"✅ Correct!":"❌ Not quite"}</h3><p>${correctTxt}</p>`;
-  if(myCorrect){
-    const pts=+document.getElementById("pPts").textContent.split(" ")[0]||0;
-    document.getElementById("pPts").textContent = (+pts + live.pts);
-  }
-  setStatus(myCorrect?"✔ Verified Correct — well done!":"✔ Verified solution revealed");
+  box.innerHTML = `<h3>${myCorrect?"✅ Correct!":"❌ Incorrect"}</h3><p style="margin:4px 0 0">${correctTxt}</p>`;
+  if(myCorrect) document.getElementById("pPts").textContent = +document.getElementById("pPts").textContent + live.pts;
 }
-/* timer tick shared */
+/* timer */
 setInterval(()=>{
-  const live=store.live;
-  const tEl=document.getElementById("pTimer");
+  const live=store.live, tEl=document.getElementById("pTimer");
   if(!live){ if(role==="player") tEl.textContent="--"; return; }
   const left=Math.max(0, live.timer - Math.floor((Date.now()-live.startedAt)/1000));
   if(role==="player") tEl.textContent = left+"s";
-  if(left===0 && role==="player") document.querySelectorAll(".opt,#saInput,.btn").forEach(e=>e.disabled=true);
-},500);
+  if(left===0 && role==="player") document.querySelectorAll(".opt,#saInput").forEach(e=>e.disabled=true);
+},400);
 window.addEventListener("storage",e=>{
   if(e.key==="quiz_live"||e.key==="quiz_reveal"){
     if(role==="admin") renderBank();
-    if(role==="player" && e.key==="quiz_reveal" && e.newValue==="1"){ myLocked=true; showFeedback(null); }
-    else if(role==="player" && e.key==="quiz_live"){ myLocked=false; sessionStorage.removeItem("quiz_sa"); renderLive(); }
+    if(role==="player" && e.key==="quiz_reveal" && e.newValue==="1"){ myLocked=true; showFeedback(); }
+    else if(role==="player" && e.key==="quiz_live"){
+      myLocked=false; sessionStorage.removeItem("quiz_sa");
+      document.getElementById("pFeedback").classList.add("hidden"); renderLive();
+    }
   }
 });
 </script>
